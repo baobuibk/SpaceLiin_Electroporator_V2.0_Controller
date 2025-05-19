@@ -155,7 +155,7 @@ void Cap_Controller_Init(void)
         .MyOutput       = &s_Cap_300V.charge_PWM_duty,
         .MySetpoint     = &s_Cap_300V.set_charge_voltage_ADC,
         .Output_Min     = 0,
-        .Output_Max     = 25,
+        .Output_Max     = 5,
     };
 
     s_Cap_50V.charge_PID = (PID_TypeDef)
@@ -171,7 +171,7 @@ void Cap_Controller_Init(void)
         .MySetpoint		=	&s_Cap_50V.set_charge_voltage_ADC,
         .Output_Min		= 	0,
         //.Output_Max		=	12,
-        .Output_Max		=	20,
+        .Output_Max		=	5,
     };
 
     s_Cap_300V.charge_PWM = (PWM_TypeDef)
@@ -217,6 +217,9 @@ void Cap_Controller_Task(void*)
     s_Cap_50V.is_charge_on            = g_Cap_50V.is_charge_on;
     s_Cap_50V.set_charge_voltage_ADC  = g_Cap_50V.set_charge_voltage_ADC;
     s_Cap_50V.is_discharge_on         = g_Cap_50V.is_discharge_on;
+
+    // is_300V_notified_enable           = g_Cap_300V.is_notified_enable;
+    // is_50V_notified_enable            = g_Cap_50V.is_notified_enable;
 
     if (s_Cap_300V.is_charge_on == false)
     {

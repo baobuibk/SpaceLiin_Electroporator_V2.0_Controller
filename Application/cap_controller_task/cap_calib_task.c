@@ -96,7 +96,8 @@ void Calib_Task_Init(void)
         //.average_value  = 0.09716993007,
         //.average_value  = 0.09768416035,
         //.average_value  = 0.098172043,
-        .average_value  = 0.09837806874,
+        //.average_value  = 0.09837806874,
+        .average_value  = 0.097978723,
     };
 
     g_Cap_50V.calib.coefficient_value = (Cap_Calib_Coefficient_typedef)

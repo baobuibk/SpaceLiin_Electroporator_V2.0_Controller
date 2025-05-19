@@ -7,8 +7,8 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Private Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-uint8_t ChannelMapping[8] = {2, 4, 7, 6, 5, 3, 0, 1};
-uint8_t User_Channel_Mapping[8] = {7, 8, 1, 6, 2, 5, 4, 3};
+uint8_t ChannelMapping[8] = {0, 1, 2, 3, 4, 5, 6, 7};
+uint8_t User_Channel_Mapping[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static void fsp_print(uint8_t packet_length);
@@ -779,7 +779,7 @@ int CMD_SET_PULSE_LV_NEG(int argc, char *argv[])
 	}
 
 	HB_sequence_array[CMD_sequence_index].lv_neg_on_ms 	= receive_argm[0];
-    HB_sequence_array[CMD_sequence_index].lv_neg_on_ms	= receive_argm[1];
+    HB_sequence_array[CMD_sequence_index].lv_neg_off_ms	= receive_argm[1];
 
 	ps_FSP_TX->CMD 								     = FSP_CMD_SET_PULSE_LV_NEG;
 	ps_FSP_TX->Payload.set_pulse_LV_neg.OnTime_low 	 = receive_argm[0];
