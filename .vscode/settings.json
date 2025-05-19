@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "app.h": "c",
+        "stm32f4_header.h": "c",
+        "stm32f4xx_ll_tim.h": "c"
+    }
+}
