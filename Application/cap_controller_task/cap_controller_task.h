@@ -14,8 +14,20 @@
 #define CAP_50V    1
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+typedef enum
+{
+    CAP_IS_IDLE,                // NO CHARGE OR DISCHARGE
+    CAP_IS_CHARGING,
+    CAP_IS_FINISH_CHARGING,
+    CAP_IS_DISCHARGING,
+    CAP_IS_FINISH_DISCHARGING,
+
+} CAP_State_t;
+
 typedef struct _Cap_Controller_Task_typedef_
 {
+    CAP_State_t cap_state;
+
     uint16_t    max_cap_volt;
     uint16_t    feedback_ADC;
     uint16_t    feedback_VOLT;
@@ -64,8 +76,11 @@ extern Cap_Controller_Task_typedef g_Cap_50V;
 /* :::::::::: Cap Controller Driver Init :::::::: */
 void Cap_Controller_Init(void);
 
-/* :::::::::: Cap Controller Task ::::::::::::: */
-void Cap_Controller_Task(void*);
+/* :::::::::: Cap Controller Charge Task ::::::::::::: */
+void Cap_Controller_Charge_Task(void*);
+
+/* :::::::::: Cap Controller Ultility Task ::::::::::::: */
+void Cap_Controller_Ultility_Task(void*);
 
 /* :::::::::: Cap Controller Command :::::::: */
 void Cap_Set_Volt(Cap_Controller_Task_typedef* cap_x, uint16_t set_voltage, bool is_notified);

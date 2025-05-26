@@ -138,7 +138,7 @@ void Calib_Task(void*)
         }
         else
         {
-            SchedulerTaskDisable(6);
+            SchedulerTaskDisable(CALIB_TASK);
         }
         
         break;
@@ -235,7 +235,7 @@ void Calib_Task(void*)
                 p_current_cap->calib.is_measure_available = false;
                 p_current_cap->calib.is_calib_running = false;
                 Calib_State = CALIB_OFF_STATE;
-                SchedulerTaskDisable(6);
+                SchedulerTaskDisable(CALIB_TASK);
                 break;
 
             default:

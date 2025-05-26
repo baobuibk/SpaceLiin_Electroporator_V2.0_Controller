@@ -1337,18 +1337,18 @@ uint16_t Impedance_Period = 0;
 uint8_t  Impedance_pos_pole, Impedance_neg_pole;
 int CMD_MEASURE_IMPEDANCE(int argc, char *argv[])
 {
-	if (argc < 6)
+	if (argc < 3)
 		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 6)
+	else if (argc > 3)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	int receive_argm[5];
+	int receive_argm[2];
 
 	receive_argm[0]  = atoi(argv[1]);
 	receive_argm[1]  = atoi(argv[2]);
-	receive_argm[2]  = atoi(argv[3]);
-	receive_argm[3]  = atoi(argv[4]);
-	receive_argm[4]  = atoi(argv[5]);
+	// receive_argm[2]  = atoi(argv[3]);
+	// receive_argm[3]  = atoi(argv[4]);
+	// receive_argm[4]  = atoi(argv[5]);
 
 	if ((receive_argm[0] > 8) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
@@ -1356,33 +1356,35 @@ int CMD_MEASURE_IMPEDANCE(int argc, char *argv[])
 	if ((receive_argm[1] > 8) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
-	if ((receive_argm[2] > 300) || (receive_argm[2] < 0))
-		return CMDLINE_INVALID_ARG;
+	// if ((receive_argm[2] > 300) || (receive_argm[2] < 0))
+	// 	return CMDLINE_INVALID_ARG;
 
-	if ((receive_argm[3] > 2000) || (receive_argm[3] < 0))
-		return CMDLINE_INVALID_ARG;
+	// if ((receive_argm[3] > 2000) || (receive_argm[3] < 0))
+	// 	return CMDLINE_INVALID_ARG;
 	
-	if ((receive_argm[4] > 1) || (receive_argm[4] < 0))
-		return CMDLINE_INVALID_ARG;
+	// if ((receive_argm[4] > 1) || (receive_argm[4] < 0))
+	// 	return CMDLINE_INVALID_ARG;
 	
 	Impedance_pos_pole = ChannelMapping[receive_argm[0] - 1];
 	Impedance_neg_pole = ChannelMapping[receive_argm[1] - 1];
 
-	Impedance_Period = receive_argm[3];
-	is_cap_release_after_measure = receive_argm[4];
+	// Impedance_Period = receive_argm[3];
+	// is_cap_release_after_measure = receive_argm[4];
 
-	g_is_Discharge_300V_On = 0;
-	g_is_Discharge_50V_On = 0;
+	// g_is_Discharge_300V_On = 0;
+	// g_is_Discharge_50V_On = 0;
 
-	g_PID_is_300V_on = 0;
-	Calib_Calculate_HV(receive_argm[2]);
-	UART_Printf(&RF_UART, "> CHARGING HV CAP TO %dV\r\n", receive_argm[2]);
-	g_PID_is_300V_on = 1;
+	// g_PID_is_300V_on = 0;
+	// Calib_Calculate_HV(receive_argm[2]);
+	// UART_Printf(&RF_UART, "> CHARGING HV CAP TO %dV\r\n", receive_argm[2]);
+	// g_PID_is_300V_on = 1;
+
+	Cap_Set_Discharge(&g_Cap_300V, false, false);
 
 	is_measure_impedance_enable = true;
-	is_300V_notified_enable = true;
+	//is_300V_notified_enable = true;
 
-	//SchedulerTaskEnable(7, 1);
+	SchedulerTaskEnable(IMPEDANCE_TASK, 1);
 
 	return CMDLINE_OK;
 }

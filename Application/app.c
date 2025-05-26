@@ -6,16 +6,30 @@
 
 static void Status_Led(void*);
 
-#define         SCHEDULER_TASK_COUNT  6
+#define         SCHEDULER_TASK_COUNT  8
 uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
                         {
-                                &Cap_Controller_Task,
+                                &Cap_Controller_Charge_Task,
                                 (void *) 0,
                                 2,                          //call every 248us
-                                0,			        //count from start
-                                true		        //is active
+                                0,			                //count from start
+                                true		                //is active
+                        },
+                        {
+                                &Cap_Controller_Ultility_Task,
+                                (void *) 0,
+                                250,                        //call every 248us
+                                0,			                //count from start
+                                true		                //is active
+                        },
+                        {
+                                &Impedance_Task,
+                                (void *) 0,
+                                10,                         //call every 248us
+                                0,			                //count from start
+                                true		                //is active
                         },
                         {
                                 &RS232_CMD_Line_Task,

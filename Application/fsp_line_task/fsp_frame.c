@@ -82,35 +82,13 @@ void FSP_Line_Process() {
 		break;
 	}
 
-	case FSP_CMD_MEASURE_IMPEDANCE: {
-	
-	// Voltage = g_Feedback_Voltage[0] * 1000
-	// 		/ HV_calib_coefficient.average_value;
-
-    if (is_cap_release_after_measure == true)
-    {
-        g_PID_is_300V_on = 0;
-        g_PID_is_50V_on = 0;
-        g_is_Discharge_300V_On = 1;
-        g_is_Discharge_50V_On = 1;
-
-        is_cap_release_after_measure = false;
-		is_300V_notified_enable = true;
-    }	
-
+	case FSP_CMD_MEASURE_IMPEDANCE:
+	{	
 		Impedance = ps_FSP_RX->Payload.measure_impedance.Value_high;
 		Impedance = Impedance << 8;
 		Impedance |= ps_FSP_RX->Payload.measure_impedance.Value_low;
 
-		//Impedance = Voltage / Avr_Current;
-
-		UART_Send_String(CMD_line_handle, "MEASURING...OK\n");
-
-		//UART_Printf(CMD_line_handle, "> CURRENT IS %dmA\n", Avr_Current);
-
-		UART_Printf(CMD_line_handle, "> IMPEDANCE IS %d Ohm\n", Impedance);
-
-		UART_Send_String(CMD_line_handle, "> ");
+		is_measure_impedance_completed = true;
 		break;
 	}
 
