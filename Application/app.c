@@ -18,9 +18,9 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                                 true		                //is active
                         },
                         {
-                                &Cap_Controller_Ultility_Task,
+                                &Cap_Controller_Monitor_Task,
                                 (void *) 0,
-                                250,                        //call every 248us
+                                10,                        //call every 248us
                                 0,			                //count from start
                                 true		                //is active
                         },

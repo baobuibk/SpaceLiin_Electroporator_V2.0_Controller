@@ -24,6 +24,20 @@ typedef enum
 
 } CAP_State_t;
 
+typedef enum
+{
+    CAP_SOFT_START_STATE,
+    CAP_CONTROL_CHARGE_STATE,
+    CAP_FREE_CHARGE_STATE,
+} Cap_Charge_State_t;
+
+typedef struct
+{
+    uint16_t Volt_Value;
+    uint16_t ADC_Value;
+    uint8_t  Duty_Max;
+} Charge_Range_t;
+
 typedef struct _Cap_Controller_Task_typedef_
 {
     CAP_State_t cap_state;
@@ -31,6 +45,13 @@ typedef struct _Cap_Controller_Task_typedef_
     uint16_t    max_cap_volt;
     uint16_t    feedback_ADC;
     uint16_t    feedback_VOLT;
+
+    Cap_Charge_State_t  charge_state;
+    Charge_Range_t*     p_range;
+    uint8_t             range_max;
+    uint8_t             range_set;
+    uint8_t             range_index;
+    uint16_t            soft_start_count;
 
     bool        is_charge_on;
     uint16_t    set_charge_voltage_USER;
@@ -80,7 +101,7 @@ void Cap_Controller_Init(void);
 void Cap_Controller_Charge_Task(void*);
 
 /* :::::::::: Cap Controller Ultility Task ::::::::::::: */
-void Cap_Controller_Ultility_Task(void*);
+void Cap_Controller_Monitor_Task(void*);
 
 /* :::::::::: Cap Controller Command :::::::: */
 void Cap_Set_Volt(Cap_Controller_Task_typedef* cap_x, uint16_t set_voltage, bool is_notified);

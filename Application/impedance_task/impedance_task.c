@@ -68,6 +68,7 @@ extern uint8_t  Impedance_pos_pole, Impedance_neg_pole;
 extern bool     is_cap_release_after_measure;
 extern bool     is_measure_impedance_enable;
 
+bool is_impedance_volt_complete = false;
 bool is_measure_impedance_completed = false;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -80,11 +81,12 @@ void Impedance_Task(void*)
 {
     if (is_measure_impedance_enable == false)
     {
+        voltage_range_count = 0;
+        impedance_range_count = 0;
+        is_impedance_volt_complete = false;
         is_measure_impedance_enable = false;
 
         Impedance_State = IMPEDANCE_SET_VOLT_STATE;
-
-        voltage_range_count = 0;
 
         SchedulerTaskDisable(IMPEDANCE_TASK);
         return;
@@ -105,10 +107,12 @@ void Impedance_Task(void*)
 
     case IMPEDANCE_SEND_COMMAND:
     {
-        if (g_Cap_300V.cap_state != CAP_IS_FINISH_CHARGING)
+        if (is_impedance_volt_complete == false)
         {
             break;
         }
+        
+        is_impedance_volt_complete = false;
 
         ps_FSP_TX->CMD 									 	= FSP_CMD_MEASURE_IMPEDANCE;
         ps_FSP_TX->Payload.measure_impedance.Pos_pole_index = Impedance_pos_pole;
@@ -153,8 +157,8 @@ void Impedance_Task(void*)
 
         voltage_range_count = 0;
         impedance_range_count = 0;
+        is_impedance_volt_complete = false;
         is_measure_impedance_enable = false;
-        SchedulerTaskDisable(IMPEDANCE_TASK);
 
         Impedance_State = IMPEDANCE_SET_VOLT_STATE;
         break;
