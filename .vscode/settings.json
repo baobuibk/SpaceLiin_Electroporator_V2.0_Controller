@@ -5,6 +5,18 @@
         "stm32f4xx_ll_tim.h": "c",
         "stdlib.h": "c",
         "impedance_task.h": "c",
-        "pid_task.h": "c"
+        "pid_task.h": "c",
+        "sensor_task.h": "c",
+        "stdint.h": "c",
+        "string.h": "c",
+        "lsm6dsox.h": "c",
+        "stm32f4xx_ll_i2c.h": "c",
+        "bmp390.h": "c",
+        "i2c.h": "c",
+        "board.h": "c",
+        "h3lis331dl.h": "c",
+        "stm32f4xx_ll_gpio.h": "c",
+        "sensor_interface.h": "c",
+        "type_traits": "c"
     }
 }

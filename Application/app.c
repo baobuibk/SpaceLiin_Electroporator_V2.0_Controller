@@ -6,7 +6,7 @@
 
 static void Status_Led(void*);
 
-#define         SCHEDULER_TASK_COUNT  8
+#define         SCHEDULER_TASK_COUNT  9
 uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
@@ -19,6 +19,13 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         },
                         {
                                 &Cap_Controller_Monitor_Task,
+                                (void *) 0,
+                                10,                        //call every 248us
+                                0,			                //count from start
+                                true		                //is active
+                        },
+                        {
+                                &Sensor_Read_Task,
                                 (void *) 0,
                                 10,                        //call every 248us
                                 0,			                //count from start
@@ -75,6 +82,8 @@ void App_Main(void)
     SchedulerInit(10000);
 
     Cap_Controller_Init();
+    Sensor_Read_Init();
+    Impedance_Task_Init();
     CMD_Line_Task_Init();
     FSP_Line_Task_Init();
 

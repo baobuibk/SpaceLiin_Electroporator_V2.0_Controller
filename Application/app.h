@@ -20,6 +20,7 @@
 #include "cap_controller_task.h"
 #include "pid_task.h"
 #include "cap_calib_task.h"
+#include "sensor_task.h"
 #include "cmd_line_task.h"
 #include "fsp_line_task.h"
 #include "impedance_task.h"
@@ -30,6 +31,7 @@ typedef enum
 {
     CAP_CONTROLLER_CHARGE_TASK,
     CAP_CONTROLLER_ULTILITY_TASK,
+    SENSOR_READ_TASK,
     IMPEDANCE_TASK,
     RS232_CMD_LINE_TASK,
     RF_CMD_LINE_TASK,

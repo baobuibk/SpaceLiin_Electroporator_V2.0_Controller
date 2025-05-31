@@ -267,6 +267,20 @@ void UART4_IRQHandler(void)
   /* USER CODE END UART4_IRQn 1 */
 }
 
+/**
+  * @brief This function handles I2C3 event interrupt.
+  */
+void I2C3_EV_IRQHandler(void)
+{
+  /* USER CODE BEGIN I2C3_EV_IRQn 0 */
+  Onboard_Sensor_I2C_IRQHandler();
+  /* USER CODE END I2C3_EV_IRQn 0 */
+
+  /* USER CODE BEGIN I2C3_EV_IRQn 1 */
+
+  /* USER CODE END I2C3_EV_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */

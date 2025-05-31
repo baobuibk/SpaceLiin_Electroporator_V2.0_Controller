@@ -44,6 +44,8 @@ char                g_RS232_CMD_line_buffer[64];
 cmd_line_typedef    RF_CMD_line;
 char                g_RF_CMD_line_buffer[64];
 
+static bool         is_warned_user = false;
+
 static const char * ErrorCode[7] = 
 {
     "OK\n",
@@ -83,6 +85,9 @@ const char SPLASH[][65] =
 static void         CMD_send_splash(uart_stdio_typedef* p_uart);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+uint8_t g_RS232_CMD_line_return = CMDLINE_OK;
+uint8_t g_RF_CMD_line_return = CMDLINE_OK;
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: CMD Line Task Init :::::::: */
 void CMD_Line_Task_Init()
@@ -129,11 +134,29 @@ void CMD_Line_Task_Init()
 /* :::::::::: CMD Line Task ::::::::::::: */
 void RS232_CMD_Line_Task(void*)
 {
-    uint8_t cmd_return, time_out;
+    uint8_t time_out;
 
     for(time_out = 50; (!RX_BUFFER_EMPTY(&RS232_UART)) && (time_out != 0); time_out--)
     {
         RS232_CMD_line.RX_char = UART_Get_Char(&RS232_UART);
+
+        if (g_RS232_CMD_line_return == CMDLINE_IS_PROCESSING)
+        {
+            if (is_warned_user == false)
+            {
+                UART_Send_String(&RS232_UART, "> ");
+            }
+
+			UART_Send_String
+            (
+                &RS232_UART,
+				"COMMAND IS BEING PROCESSED, PLEASE WAIT\n"
+            );
+			UART_Send_String(&RS232_UART, "> ");
+			is_warned_user = true;
+
+            break;
+		}
         
         if(((RS232_CMD_line.RX_char == 8) || (RS232_CMD_line.RX_char == 127)))
         {
@@ -151,16 +174,16 @@ void RS232_CMD_Line_Task(void*)
         {
             char buffer_temp[] = "SET_AUTO_ACCEL 0";
             CMD_line_handle = &RS232_UART;
-            cmd_return = CmdLineProcess(buffer_temp);
+            g_RS232_CMD_line_return = CmdLineProcess(buffer_temp);
 
-            if (cmd_return == CMDLINE_NO_RESPONSE)
+            if (g_RS232_CMD_line_return == CMDLINE_NO_RESPONSE)
             {
                 UART_Send_String(&RS232_UART, "\033[1;1H");
             }
             else
             {
                 UART_Send_String(&RS232_UART, "> ");
-                UART_Printf(&RS232_UART, ErrorCode[cmd_return]);
+                UART_Printf(&RS232_UART, ErrorCode[g_RS232_CMD_line_return]);
             }
 
             UART_Send_String(&RS232_UART, "> ");
@@ -173,21 +196,26 @@ void RS232_CMD_Line_Task(void*)
             {
                 // Add a NUL char at the end of the CMD
                 RS232_CMD_line.p_buffer[RS232_CMD_line.write_index] = 0;
-                RS232_CMD_line.write_index++;
+                // RS232_CMD_line.write_index++;
 
-                CMD_line_handle = &RS232_UART;
-                cmd_return = CmdLineProcess(RS232_CMD_line.p_buffer);
-                //RS232_CMD_line.read_index = RS232_CMD_line.write_index;
-                RS232_CMD_line.write_index    = 0;
+                CMD_line_handle   = &RS232_UART;
+                g_RS232_CMD_line_return = CmdLineProcess(RS232_CMD_line.p_buffer);
 
-                if (cmd_return == CMDLINE_NO_RESPONSE)
+                if (g_RS232_CMD_line_return == CMDLINE_IS_PROCESSING)
+                {
+					return;
+				}
+
+                RS232_CMD_line.write_index = 0;
+
+                if (g_RS232_CMD_line_return == CMDLINE_NO_RESPONSE)
                 {
 					UART_Send_String(&RS232_UART, "\033[1;1H");
 				}
                 else
                 {
 					UART_Send_String(&RS232_UART, "> ");
-					UART_Printf(&RS232_UART, ErrorCode[cmd_return]);
+					UART_Printf(&RS232_UART, ErrorCode[g_RS232_CMD_line_return]);
 				}
 
                 UART_Send_String(&RS232_UART, "> ");
@@ -213,15 +241,62 @@ void RS232_CMD_Line_Task(void*)
             }
         }
     }
+
+    if (g_RS232_CMD_line_return == CMDLINE_IS_PROCESSING)
+    {
+		g_RS232_CMD_line_return = CmdLineProcess(RS232_CMD_line.p_buffer);
+
+		if (g_RS232_CMD_line_return == CMDLINE_IS_PROCESSING)
+        {
+			return;
+		}
+
+		RS232_CMD_line.write_index = 0;
+
+		UART_Send_String(&RS232_UART, "> ");
+		UART_Printf(&RS232_UART, ErrorCode[g_RS232_CMD_line_return]);
+		UART_Send_String(&RS232_UART, "> ");
+
+		if (is_warned_user == true)
+        {
+			UART_Send_String
+            (
+                &RS232_UART,
+			    "FINISH PROCESS COMMAND, PLEASE CONTINUE\n"
+            );
+
+			UART_Send_String(&RS232_UART, "> ");
+			is_warned_user = false;
+		}
+
+	}
 }
 
 void RF_CMD_Line_Task(void*)
 {
-    uint8_t cmd_return, time_out;
+    uint8_t time_out;
 
     for(time_out = 50; (!RX_BUFFER_EMPTY(&RF_UART)) && (time_out != 0); time_out--)
     {
         RF_CMD_line.RX_char = UART_Get_Char(&RF_UART);
+
+        if (g_RF_CMD_line_return == CMDLINE_IS_PROCESSING)
+        {
+            if (is_warned_user == false)
+            {
+                UART_Send_String(&RF_UART, "> ");
+            }
+            
+			UART_Send_String
+            (
+                &RF_UART,
+				"COMMAND IS BEING PROCESSED, PLEASE WAIT\n"
+            );
+			UART_Send_String(&RF_UART, "> ");
+			is_warned_user = true;
+
+            break;
+		}
         
         if(((RF_CMD_line.RX_char == 8) || (RF_CMD_line.RX_char == 127)))
         {
@@ -239,16 +314,16 @@ void RF_CMD_Line_Task(void*)
         {
             char buffer_temp[] = "SET_AUTO_ACCEL 0";
             CMD_line_handle = &RF_UART;
-            cmd_return = CmdLineProcess(buffer_temp);
+            g_RF_CMD_line_return = CmdLineProcess(buffer_temp);
 
-            if (cmd_return == CMDLINE_NO_RESPONSE)
+            if (g_RF_CMD_line_return == CMDLINE_NO_RESPONSE)
             {
                 UART_Send_String(&RF_UART, "\033[1;1H");
             }
             else
             {
                 UART_Send_String(&RF_UART, "> ");
-                UART_Printf(&RF_UART, ErrorCode[cmd_return]);
+                UART_Printf(&RF_UART, ErrorCode[g_RF_CMD_line_return]);
             }
 
             UART_Send_String(&RF_UART, "> ");
@@ -261,21 +336,26 @@ void RF_CMD_Line_Task(void*)
             {
                 // Add a NUL char at the end of the CMD
                 RF_CMD_line.p_buffer[RF_CMD_line.write_index] = 0;
-                RF_CMD_line.write_index++;
+                //RF_CMD_line.write_index++;
 
-                CMD_line_handle = &RF_UART;
-                cmd_return = CmdLineProcess(RF_CMD_line.p_buffer);
-                //RF_CMD_line.read_index = RF_CMD_line.write_index;
-                RF_CMD_line.write_index    = 0;
+                CMD_line_handle   = &RF_UART;
+                g_RF_CMD_line_return = CmdLineProcess(RF_CMD_line.p_buffer);
 
-				if (cmd_return == CMDLINE_NO_RESPONSE)
+                if (g_RF_CMD_line_return == CMDLINE_IS_PROCESSING)
+                {
+					return;
+				}
+
+                RF_CMD_line.write_index = 0;
+
+				if (g_RF_CMD_line_return == CMDLINE_NO_RESPONSE)
                 {
 					UART_Send_String(&RF_UART, "\033[1;1H");
 				}
                 else
                 {
 					UART_Send_String(&RF_UART, "> ");
-					UART_Printf(&RF_UART, ErrorCode[cmd_return]);
+					UART_Printf(&RF_UART, ErrorCode[g_RF_CMD_line_return]);
 				}
 
                 UART_Send_String(&RF_UART, "> ");
@@ -301,6 +381,35 @@ void RF_CMD_Line_Task(void*)
             }
         }
     }
+
+    if (g_RF_CMD_line_return == CMDLINE_IS_PROCESSING)
+    {
+		g_RF_CMD_line_return = CmdLineProcess(RF_CMD_line.p_buffer);
+
+		if (g_RF_CMD_line_return == CMDLINE_IS_PROCESSING)
+        {
+			return;
+		}
+
+		RF_CMD_line.write_index = 0;
+
+		UART_Send_String(&RF_UART, "> ");
+		UART_Printf(&RF_UART, ErrorCode[g_RF_CMD_line_return]);
+		UART_Send_String(&RF_UART, "> ");
+
+		if (is_warned_user == true)
+        {
+			UART_Send_String
+            (
+                &RF_UART,
+			    "FINISH PROCESS COMMAND, PLEASE CONTINUE\n"
+            );
+
+			UART_Send_String(&RF_UART, "> ");
+			is_warned_user = false;
+		}
+
+	}
 }
 
 /* :::::::::: IRQ Handler ::::::::::::: */

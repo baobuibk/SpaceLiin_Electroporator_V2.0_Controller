@@ -7,6 +7,8 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Private Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+static uint8_t CMD_process_state = 0;
+
 uint8_t ChannelMapping[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 uint8_t User_Channel_Mapping[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
@@ -1376,7 +1378,7 @@ int CMD_MEASURE_IMPEDANCE(int argc, char *argv[])
 
 	// g_PID_is_300V_on = 0;
 	// Calib_Calculate_HV(receive_argm[2]);
-	// UART_Printf(&RF_UART, "> CHARGING HV CAP TO %dV\r\n", receive_argm[2]);
+	// UART_Printf(&CMD_line_handle, "> CHARGING HV CAP TO %dV\r\n", receive_argm[2]);
 	// g_PID_is_300V_on = 1;
 
 	Cap_Set_Discharge(&g_Cap_300V, false, false);
@@ -1488,10 +1490,37 @@ int CMD_GET_SENSOR_H3LIS(int argc, char *argv[])
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_H3LIS331DL;
-	fsp_print(1);
+	switch (CMD_process_state)
+	{
+	case 0:
+	{
+		if (argc < 1)
+			return CMDLINE_TOO_FEW_ARGS;
+		else if (argc > 1)
+			return CMDLINE_TOO_MANY_ARGS;
 
-	return CMDLINE_OK;
+		Sensor_Read_Value(ONBOARD_SENSOR_READ_H3LIS331DL);
+		CMD_process_state = 1;
+		return CMDLINE_IS_PROCESSING;
+	}
+
+	case 1:
+	{
+		if (Is_Sensor_Read_Complete(&Onboard_Sensor_H3LIS331DL_rb) == false)
+		{
+			return CMDLINE_IS_PROCESSING;
+		}
+
+		UART_Printf(CMD_line_handle, "> ACCEL x: %dmg; ACCEL y: %dmg; ACCEL z: %dmg\n", H3LIS_Accel.x, H3LIS_Accel.y, H3LIS_Accel.z);
+		CMD_process_state = 0;
+		return CMDLINE_OK;
+	}
+
+	default:
+		break;
+	}
+
+	return CMDLINE_BAD_CMD;
 }
 
 /* :::::::::: Ultility Command :::::::: */

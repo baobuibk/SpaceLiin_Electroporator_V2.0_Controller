@@ -87,7 +87,14 @@ extern "C"
 
 //*****************************************************************************
 //
-#define CMDLINE_NO_RESPONSE  (7)
+//! Defines the value that is returned if an command is invalid.
+//
+//*****************************************************************************
+#define CMDLINE_IS_PROCESSING (7)
+
+//*****************************************************************************
+//
+#define CMDLINE_NO_RESPONSE  (8)
 
 // Command line function callback type.
 //

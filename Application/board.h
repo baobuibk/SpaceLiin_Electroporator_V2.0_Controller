@@ -65,6 +65,21 @@
 // #define FRAM_SPI_CS_PIN         LL_GPIO_PIN_0
 // /***********************************************/
 
+/**********************I2C**********************/
+#define SENSOR_I2C_HANDLE       I2C1
+#define SENSOR_I2C_IRQ          I2C1_EV_IRQn
+
+#define ONBOARD_SENSOR_I2C_HANDLE   I2C3
+#define ONBOARD_SENSOR_I2C_IRQ      I2C3_EV_IRQn
+
+#define ONBOARD_SENSOR_INT1_PORT    GPIOB
+#define ONBOARD_SENSOR_INT1_PIN     LL_GPIO_PIN_2
+
+#define ONBOARD_SENSOR_INT2_PORT     GPIOB
+#define ONBOARD_SENSOR_INT2_PIN     LL_GPIO_PIN_0
+
+/***********************************************/
+
 /*******************DEBUG LED*******************/
 #define DEBUG_LED_PORT          GPIOC
 #define DEBUG_LED_PIN           LL_GPIO_PIN_8
