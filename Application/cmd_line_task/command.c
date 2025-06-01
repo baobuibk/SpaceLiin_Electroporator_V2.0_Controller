@@ -1164,7 +1164,8 @@ int CMD_GET_PULSE_ALL(int argc, char *argv[])
 }
 
 /* :::::::::: Auto Pulsing Command :::::::::: */
-int CMD_SET_THRESHOLD_ACCEL(int argc, char *argv[]) {
+int CMD_SET_THRESHOLD_ACCEL(int argc, char *argv[])
+{
 	if (argc < 4)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 4)
@@ -1174,50 +1175,98 @@ int CMD_SET_THRESHOLD_ACCEL(int argc, char *argv[]) {
 	int16_t y = (int16_t)atoi(argv[2]);
 	int16_t z = (int16_t)atoi(argv[3]);
 
-	// Ghi giá trị vào cấu trúc bằng cách chia byte
-	ps_FSP_TX->CMD 			= FSP_CMD_SET_THRESHOLD_ACCEL;
-	ps_FSP_TX->Payload.set_threshold_accel.XL = x & 0xFF;       // Byte thấp của X
-	ps_FSP_TX->Payload.set_threshold_accel.XH = (x >> 8) & 0xFF; // Byte cao của X
-	ps_FSP_TX->Payload.set_threshold_accel.YL = y & 0xFF;       // Byte thấp của Y
-	ps_FSP_TX->Payload.set_threshold_accel.YH = (y >> 8) & 0xFF; // Byte cao của Y
-	ps_FSP_TX->Payload.set_threshold_accel.ZL = z & 0xFF;       // Byte thấp của Z
-	ps_FSP_TX->Payload.set_threshold_accel.ZH = (z >> 8) & 0xFF; // Byte cao của Z
-	fsp_print(7);
+	Threshold_Accel.x = x;
+	Threshold_Accel.y = y;
+	Threshold_Accel.z = z;
+
 	return CMDLINE_OK;
 }
 
-int CMD_GET_THRESHOLD_ACCEL(int argc, char *argv[]) {
+int CMD_GET_THRESHOLD_ACCEL(int argc, char *argv[])
+{
 	if (argc < 1)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
-	ps_FSP_TX->CMD 			= FSP_CMD_GET_THRESHOLD_ACCEL;
-	fsp_print(1);
+
+	// In giá trị ra
+	UART_Printf(CMD_line_handle, "Threshold Accel is: %d %d %d\n", Threshold_Accel.x, Threshold_Accel.y, Threshold_Accel.z);
+
 	return CMDLINE_OK;
 }
 
-int CMD_SET_AUTO_ACCEL(int argc, char *argv[]) {
+int CMD_SET_AUTO_ACCEL(int argc, char *argv[])
+{
 	if (argc < 2)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 2)
 		return CMDLINE_TOO_MANY_ARGS;
+	
 	int8_t receive_argm = atoi(argv[1]);
 
 	if ((receive_argm > 1) || (receive_argm < 0))
 		return CMDLINE_INVALID_ARG;
 
+	if (HB_sequence_array[CMD_sequence_index].pos_pole_index == HB_sequence_array[CMD_sequence_index].neg_pole_index)
+	{
+		UART_Send_String(CMD_line_handle, "> ERROR CURRENT SEQUENCE PULSE POLE IS THE SAME\n");
+		UART_Printf(CMD_line_handle, "> PULSE POS POLE: %d; PULSE NEG POLE: %d\n",
+		User_Channel_Mapping[HB_sequence_array[CMD_sequence_index].pos_pole_index], User_Channel_Mapping[HB_sequence_array[CMD_sequence_index].neg_pole_index]);
+		return CMDLINE_OK;
+	}
+
+	if (((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 7)) == 0) && ((receive_argm - 1) != CMD_sequence_index))
+	{
+		UART_Printf(CMD_line_handle, "> ERROR CURRENT SEQUENCE INDEX: %d IS NOT CONFIRMED\n", CMD_sequence_index + 1);
+
+		UART_Send_String(CMD_line_handle, "> EITHER CONFIRM IT OR DELETE IT\n");
+
+		UART_Send_String(CMD_line_handle, "> \n");
+
+		UART_Printf(CMD_line_handle, "> DELAY BETWEEN SEQUENCE: %dms\n", HB_sequence_array[CMD_sequence_index].sequence_delay_ms);
+
+		UART_Send_String(CMD_line_handle, "> \n");
+
+		UART_Printf(CMD_line_handle, "> POS HV PULSE COUNT: %d; NEG HV PULSE COUNT: %d\n",
+		HB_sequence_array[CMD_sequence_index].hv_pos_count, HB_sequence_array[CMD_sequence_index].hv_neg_count);
+		UART_Printf(CMD_line_handle, "> POS LV PULSE COUNT: %d; NEG LV PULSE COUNT: %d\n",
+		HB_sequence_array[CMD_sequence_index].lv_pos_count, HB_sequence_array[CMD_sequence_index].lv_neg_count);
+
+		UART_Send_String(CMD_line_handle, "> \n");
+
+		UART_Printf(CMD_line_handle, "> DELAY BETWEEN HV POS AND NEG PULSE: %dms\n", HB_sequence_array[CMD_sequence_index].hv_delay_ms);
+		UART_Printf(CMD_line_handle, "> DELAY BETWEEN LV POS AND NEG PULSE: %dms\n", HB_sequence_array[CMD_sequence_index].lv_delay_ms);
+		UART_Printf(CMD_line_handle, "> DELAY BETWEEN HV PULSE AND LV PULSE: %dms\n", HB_sequence_array[CMD_sequence_index].pulse_delay_ms);
+
+		UART_Send_String(CMD_line_handle, "> \n");
+
+		UART_Printf(CMD_line_handle, "> HV PULSE POS ON TIME: %dms; HV PULSE POS OFF TIME: %dms\n",
+		HB_sequence_array[CMD_sequence_index].hv_pos_on_ms, HB_sequence_array[CMD_sequence_index].hv_pos_off_ms);
+
+		UART_Printf(CMD_line_handle, "> HV PULSE NEG ON TIME: %dms; HV PULSE NEG OFF TIME: %dms\n",
+		HB_sequence_array[CMD_sequence_index].hv_neg_on_ms, HB_sequence_array[CMD_sequence_index].hv_neg_off_ms);
+
+		UART_Printf(CMD_line_handle, "> LV PULSE POS ON TIME: %dms; LV PULSE POS OFF TIME: %dms\n",
+		HB_sequence_array[CMD_sequence_index].lv_pos_on_ms, HB_sequence_array[CMD_sequence_index].lv_pos_off_ms);
+		
+		UART_Printf(CMD_line_handle, "> LV PULSE NEG ON TIME: %dms; LV PULSE NEG OFF TIME: %dms\n",
+		HB_sequence_array[CMD_sequence_index].lv_neg_on_ms, HB_sequence_array[CMD_sequence_index].lv_neg_off_ms);
+
+		UART_Send_String(CMD_line_handle, "> \n");
+		return CMDLINE_OK;
+	}
+
 	if (receive_argm == 1)
 	{
 		is_streaming_enable = true;
+		Enable_Auto_Pulsing();
 	}
 	else
 	{
 		is_streaming_enable = false;
+		Disable_Auto_Pulsing();
 	}
 
-	ps_FSP_TX->CMD 			= FSP_CMD_SET_AUTO_ACCEL;
-	ps_FSP_TX->Payload.set_auto_accel.State = receive_argm;
-	fsp_print(2);
 	return CMDLINE_OK;
 }
 
@@ -1572,7 +1621,7 @@ int CMD_CALIB_RUN(int argc, char *argv[])
 	g_is_calib_running = receive_argm;
 
 	if (receive_argm == 1) {
-		SchedulerTaskEnable(6, 1);
+		SchedulerTaskEnable(CALIB_TASK, 1);
 	}
 
 	return CMDLINE_OK;

@@ -6,7 +6,7 @@
 
 static void Status_Led(void*);
 
-#define         SCHEDULER_TASK_COUNT  9
+#define         SCHEDULER_TASK_COUNT  10
 uint32_t        g_ui32SchedulerNumTasks = SCHEDULER_TASK_COUNT;
 tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                 {
@@ -26,6 +26,13 @@ tSchedulerTask 	g_psSchedulerTable[SCHEDULER_TASK_COUNT] =
                         },
                         {
                                 &Sensor_Read_Task,
+                                (void *) 0,
+                                10,                        //call every 248us
+                                0,			                //count from start
+                                true		                //is active
+                        },
+                        {
+                                &Accel_Pulsing_Task,
                                 (void *) 0,
                                 10,                        //call every 248us
                                 0,			                //count from start

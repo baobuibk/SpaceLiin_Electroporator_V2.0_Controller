@@ -17,6 +17,10 @@
         "h3lis331dl.h": "c",
         "stm32f4xx_ll_gpio.h": "c",
         "sensor_interface.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "accel_pulsing_task.h": "c",
+        "cap_calib_task.h": "c",
+        "cmd_line_task.h": "c",
+        "uart.h": "c"
     }
 }
