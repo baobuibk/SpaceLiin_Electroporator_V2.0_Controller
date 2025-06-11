@@ -36,6 +36,7 @@ typedef struct _sensor_request_rb_t_
 } sensor_request_rb_t;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+extern sensor_request_rb_t Sensor_BMP390_rb;
 extern sensor_request_rb_t Sensor_LSM6DSOX_rb;
 extern sensor_request_rb_t Onboard_Sensor_H3LIS331DL_rb;
 

@@ -54,14 +54,14 @@ static uint16_t     advance_buffer_index(volatile uint16_t* pui16Index, uint16_t
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 i2c_stdio_typedef Sensor_I2C;
-#define			  SENSOR_DATA_ARRAY_SIZE 3 * 16
+#define			  SENSOR_DATA_ARRAY_SIZE 2 * 16
 I2C_data_t 		  g_sensor_I2C_data_array[SENSOR_DATA_ARRAY_SIZE];
 
-// request_buffer_t g_sensor_BMP390_request_buffer[16];
+request_buffer_t g_sensor_BMP390_request_buffer[16];
 request_buffer_t g_sensor_LSM6DSOX_request_buffer[16];
 // request_buffer_t g_sensor_H3LIS331DL_request_buffer[16];
 
-// sensor_request_rb_t Sensor_BMP390_rb;
+sensor_request_rb_t Sensor_BMP390_rb;
 sensor_request_rb_t Sensor_LSM6DSOX_rb;
 // sensor_request_rb_t Sensor_H3LIS331DL_rb;
 
@@ -73,9 +73,10 @@ request_buffer_t    g_onboard_sensor_H3LIS331DL_request_buffer[16];
 
 sensor_request_rb_t Onboard_Sensor_H3LIS331DL_rb;
 
-#define NUMBER_OF_SENSOR 2
+#define NUMBER_OF_SENSOR 3
 sensor_request_rb_t* Sensor_List[NUMBER_OF_SENSOR] =
 {
+	&Sensor_BMP390_rb,
 	&Sensor_LSM6DSOX_rb,
 	&Onboard_Sensor_H3LIS331DL_rb,
 };
@@ -103,16 +104,19 @@ void Sensor_Read_Init(void)
 
 	sensor_request_rb_t *p_current_sensor;
 
-	// Sensor_BMP390_rb.p_i2c				= &Sensor_I2C;
-	// Sensor_BMP390_rb.p_request_buffer	= g_sensor_BMP390_request_buffer;
-	// Sensor_BMP390_rb.buffer_size    	= 16;
-	// Sensor_BMP390_rb.write_index 		= 0;
-	// Sensor_BMP390_rb.read_index			= 0;
+	Sensor_BMP390_rb.p_i2c				= &Sensor_I2C;
+	Sensor_BMP390_rb.p_request_buffer	= g_sensor_BMP390_request_buffer;
+	Sensor_BMP390_rb.buffer_size    	= 16;
+	Sensor_BMP390_rb.write_index 		= 0;
+	Sensor_BMP390_rb.read_index			= 0;
 
-	// for (uint8_t i = 0; i < Sensor_BMP390_rb.buffer_size; i++)
-	// {
-	// 	Sensor_BMP390_rb.p_request_buffer[i].request = 0;
-	// }
+	Sensor_BMP390_rb.pfn_sensor_function = &Sensor_BMP390;
+
+	for (uint8_t i = 0; i < Sensor_BMP390_rb.buffer_size; i++)
+	{
+		Sensor_BMP390_rb.p_request_buffer[i].is_requested = false;
+		Sensor_BMP390_rb.p_request_buffer[i].request = 0;
+	}
 	
 	Sensor_LSM6DSOX_rb.p_i2c			= &Sensor_I2C;
 	Sensor_LSM6DSOX_rb.p_request_buffer	= g_sensor_LSM6DSOX_request_buffer;
@@ -239,14 +243,14 @@ bool Sensor_Read_Value(Sensor_Read_typedef read_type)
 	switch (read_type)
     {
 
-	// case SENSOR_READ_TEMP:
-	// case SENSOR_READ_PRESSURE:
-	// case SENSOR_READ_ALTITUDE:
-	// case SENSOR_READ_BMP390:
-    // {
-	// 	p_sensor_rb = &Sensor_BMP390_rb;
-    //     break;
-	// }
+	case SENSOR_READ_TEMP:
+	case SENSOR_READ_PRESSURE:
+	case SENSOR_READ_ALTITUDE:
+	case SENSOR_READ_BMP390:
+    {
+		p_sensor_rb = &Sensor_BMP390_rb;
+        break;
+	}
 
 	case SENSOR_READ_GYRO:
 	case SENSOR_READ_ACCEL:

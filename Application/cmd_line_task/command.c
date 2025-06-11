@@ -1,5 +1,7 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Include~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+#include <stdio.h>
 #include "command.h"
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Enum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -14,6 +16,8 @@ uint8_t User_Channel_Mapping[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static void fsp_print(uint8_t packet_length);
+static void double_to_string(double value, char *buffer, uint8_t precision);
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 tCmdLineEntry g_psCmdTable[] =
 {
@@ -1551,54 +1555,168 @@ return CMDLINE_BAD_CMD;
 
 int CMD_GET_SENSOR_TEMP(int argc, char *argv[])
 {
+switch (CMD_process_state)
+{
+case 0:
+{
 	if (argc < 1)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_TEMP;
-	fsp_print(1);
+	Sensor_Read_Value(SENSOR_READ_TEMP);
 
-	return CMDLINE_OK;
+	CMD_process_state = 1;
+	return CMDLINE_IS_PROCESSING;
+}
+
+
+case 1:
+{
+	if (Is_Sensor_Read_Complete(&Sensor_BMP390_rb) == false)
+	{
+		return CMDLINE_IS_PROCESSING;
+	}
+	
+	char fractional_string[16] = {0};
+	double_to_string(Sensor_Temp, fractional_string, 3);
+
+	UART_Printf(CMD_line_handle, "> TEMPERATURE: %s C\n", fractional_string);
+
+	CMD_process_state = 0;
+    return CMDLINE_OK;
+}
+
+default:
+	break;
+}
+return CMDLINE_BAD_CMD;
 }
 
 int CMD_GET_SENSOR_PRESSURE(int argc, char *argv[])
 {
+switch (CMD_process_state)
+{
+case 0:
+{
 	if (argc < 1)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_PRESSURE;
-	fsp_print(1);
+	Sensor_Read_Value(SENSOR_READ_PRESSURE);
 
-	return CMDLINE_OK;
+	CMD_process_state = 1;
+	return CMDLINE_IS_PROCESSING;
+}
+
+
+case 1:
+{
+	if (Is_Sensor_Read_Complete(&Sensor_BMP390_rb) == false)
+	{
+		return CMDLINE_IS_PROCESSING;
+	}
+
+	char fractional_string[16] = {0};
+	double_to_string(Sensor_Pressure, fractional_string, 3);
+	
+	UART_Printf(CMD_line_handle, "> PRESSURE: %s Pa\n", fractional_string);
+
+	CMD_process_state = 0;
+    return CMDLINE_OK;
+}
+
+default:
+	break;
+}
+return CMDLINE_BAD_CMD;
 }
 
 int CMD_GET_SENSOR_ALTITUDE(int argc, char *argv[])
 {
-	if (argc < 1)
-		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 1)
-		return CMDLINE_TOO_MANY_ARGS;
-
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_ALTITUDE;
-	fsp_print(1);
-
-	return CMDLINE_OK;
-}
-
-int CMD_GET_SENSOR_BMP390(int argc, char *argv[])
+switch (CMD_process_state)
+{
+case 0:
 {
 	if (argc < 1)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_BMP390;
-	fsp_print(1);
+	Sensor_Read_Value(SENSOR_READ_ACCEL);
 
-	return CMDLINE_OK;
+	CMD_process_state = 1;
+	return CMDLINE_IS_PROCESSING;
+}
+
+
+case 1:
+{
+	if (Is_Sensor_Read_Complete(&Sensor_BMP390_rb) == false)
+	{
+		return CMDLINE_IS_PROCESSING;
+	}
+	
+	char fractional_string[16] = {0};
+	double_to_string(Sensor_Altitude, fractional_string, 3);
+
+	UART_Printf(CMD_line_handle, "> ALTITUDE: %s m\n", fractional_string);
+
+	CMD_process_state = 0;
+    return CMDLINE_OK;
+}
+
+default:
+	break;
+}
+return CMDLINE_BAD_CMD;
+}
+
+int CMD_GET_SENSOR_BMP390(int argc, char *argv[])
+{
+switch (CMD_process_state)
+{
+case 0:
+{
+	if (argc < 1)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 1)
+		return CMDLINE_TOO_MANY_ARGS;
+
+	Sensor_Read_Value(SENSOR_READ_BMP390);
+
+	CMD_process_state = 1;
+	return CMDLINE_IS_PROCESSING;
+}
+
+
+case 1:
+{
+	if (Is_Sensor_Read_Complete(&Sensor_BMP390_rb) == false)
+	{
+		return CMDLINE_IS_PROCESSING;
+	}
+
+	char fractional_string[16] = {0};
+
+	double_to_string(Sensor_Temp, fractional_string, 3);
+	UART_Printf(CMD_line_handle, "> TEMPERATURE: %s C\n", fractional_string);
+
+	double_to_string(Sensor_Pressure, fractional_string, 3);
+	UART_Printf(CMD_line_handle, "> PRESSURE: %s Pa\n", fractional_string);
+
+	double_to_string(Sensor_Altitude, fractional_string, 3);
+	UART_Printf(CMD_line_handle, "> ALTITUDE: %s m\n", fractional_string);
+
+	CMD_process_state = 0;
+    return CMDLINE_OK;
+}
+
+default:
+	break;
+}
+return CMDLINE_BAD_CMD;
 }
 
 int CMD_GET_SENSOR_H3LIS(int argc, char *argv[])
@@ -1752,4 +1870,40 @@ static void fsp_print(uint8_t packet_length)
 	fsp_encode(&s_FSP_TX_Packet, encoded_frame, &frame_len);
 
 	UART_FSP(&GPP_UART, (char*)encoded_frame, frame_len);
+}
+
+static void double_to_string(double value, char *buffer, uint8_t precision)
+{
+    // Handle negative numbers
+    if (value < 0)
+	{
+        *buffer++ = '-';
+        value = -value;
+    }
+
+    // Extract the integer part
+    uint32_t integer_part  = (uint32_t)value;
+    double fractional_part = value - integer_part;
+
+    // Convert integer part to string
+    sprintf(buffer, "%ld", integer_part);
+    while (*buffer) buffer++; // Move pointer to the end of the integer part
+
+    // Add decimal point
+    if (precision > 0)
+	{
+        *buffer++ = '.';
+
+        // Extract and convert the fractional part
+        for (uint8_t i = 0; i < precision; i++)
+		{
+            fractional_part *= 10;
+            uint8_t digit = (uint8_t)fractional_part;
+            *buffer++ = '0' + digit;
+            fractional_part -= digit;
+        }
+    }
+
+    // Null-terminate the string
+    *buffer = '\0';
 }
