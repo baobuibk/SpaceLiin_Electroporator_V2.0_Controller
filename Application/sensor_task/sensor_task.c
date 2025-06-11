@@ -53,16 +53,16 @@ static uint16_t     advance_buffer_index(volatile uint16_t* pui16Index, uint16_t
                                                                       				(p_sensor)->buffer_size))
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-// i2c_stdio_typedef Sensor_I2C;
-// #define			  SENSOR_DATA_ARRAY_SIZE 3 * 16
-// I2C_data_t 		  g_sensor_I2C_data_array[SENSOR_DATA_ARRAY_SIZE];
+i2c_stdio_typedef Sensor_I2C;
+#define			  SENSOR_DATA_ARRAY_SIZE 3 * 16
+I2C_data_t 		  g_sensor_I2C_data_array[SENSOR_DATA_ARRAY_SIZE];
 
 // request_buffer_t g_sensor_BMP390_request_buffer[16];
-// request_buffer_t g_sensor_LSM6DSOX_request_buffer[16];
+request_buffer_t g_sensor_LSM6DSOX_request_buffer[16];
 // request_buffer_t g_sensor_H3LIS331DL_request_buffer[16];
 
 // sensor_request_rb_t Sensor_BMP390_rb;
-// sensor_request_rb_t Sensor_LSM6DSOX_rb;
+sensor_request_rb_t Sensor_LSM6DSOX_rb;
 // sensor_request_rb_t Sensor_H3LIS331DL_rb;
 
 i2c_stdio_typedef   Onboard_Sensor_I2C;
@@ -73,15 +73,25 @@ request_buffer_t    g_onboard_sensor_H3LIS331DL_request_buffer[16];
 
 sensor_request_rb_t Onboard_Sensor_H3LIS331DL_rb;
 
-#define NUMBER_OF_SENSOR 1
+#define NUMBER_OF_SENSOR 2
 sensor_request_rb_t* Sensor_List[NUMBER_OF_SENSOR] =
 {
+	&Sensor_LSM6DSOX_rb,
 	&Onboard_Sensor_H3LIS331DL_rb,
 };
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 void Sensor_Read_Init(void)
 {
+	I2C_Init
+	(
+		&Sensor_I2C,
+		SENSOR_I2C_HANDLE,
+		SENSOR_I2C_IRQ,
+		g_sensor_I2C_data_array,
+		SENSOR_DATA_ARRAY_SIZE
+	);
+
 	I2C_Init
 	(
 		&Onboard_Sensor_I2C,
@@ -104,16 +114,19 @@ void Sensor_Read_Init(void)
 	// 	Sensor_BMP390_rb.p_request_buffer[i].request = 0;
 	// }
 	
-	// Sensor_LSM6DSOX_rb.p_i2c			= &Sensor_I2C;
-	// Sensor_LSM6DSOX_rb.p_request_buffer	= g_sensor_LSM6DSOX_request_buffer;
-	// Sensor_LSM6DSOX_rb.buffer_size    	= 16;
-	// Sensor_LSM6DSOX_rb.write_index 		= 0;
-	// Sensor_LSM6DSOX_rb.read_index		= 0;
+	Sensor_LSM6DSOX_rb.p_i2c			= &Sensor_I2C;
+	Sensor_LSM6DSOX_rb.p_request_buffer	= g_sensor_LSM6DSOX_request_buffer;
+	Sensor_LSM6DSOX_rb.buffer_size    	= 16;
+	Sensor_LSM6DSOX_rb.write_index 		= 0;
+	Sensor_LSM6DSOX_rb.read_index		= 0;
 
-	// for (uint8_t i = 0; i < Sensor_LSM6DSOX_rb.buffer_size; i++)
-	// {
-	// 	Sensor_LSM6DSOX_rb.p_request_buffer[i].request = 0;
-	// }
+	Sensor_LSM6DSOX_rb.pfn_sensor_function = &Sensor_LSM6DSOX;
+
+	for (uint8_t i = 0; i < Sensor_LSM6DSOX_rb.buffer_size; i++)
+	{
+		Sensor_LSM6DSOX_rb.p_request_buffer[i].is_requested = false;
+		Sensor_LSM6DSOX_rb.p_request_buffer[i].request = 0;
+	}
 
 	Onboard_Sensor_H3LIS331DL_rb.p_i2c				= &Onboard_Sensor_I2C;
 	Onboard_Sensor_H3LIS331DL_rb.p_request_buffer	= g_onboard_sensor_H3LIS331DL_request_buffer;
@@ -235,13 +248,13 @@ bool Sensor_Read_Value(Sensor_Read_typedef read_type)
     //     break;
 	// }
 
-	// case SENSOR_READ_GYRO:
-	// case SENSOR_READ_ACCEL:
-	// case SENSOR_READ_LSM6DSOX:
-    // {
-	// 	p_sensor_rb = &Sensor_LSM6DSOX_rb;
-    //     break;
-	// }
+	case SENSOR_READ_GYRO:
+	case SENSOR_READ_ACCEL:
+	case SENSOR_READ_LSM6DSOX:
+    {
+		p_sensor_rb = &Sensor_LSM6DSOX_rb;
+        break;
+	}
 
 	// case SENSOR_READ_H3LIS331DL:
 	// {
@@ -290,6 +303,11 @@ bool Is_Sensor_Read_Complete(sensor_request_rb_t* p_sensor_rb)
 	}
 	
 	return 0;
+}
+
+void Sensor_I2C_IRQHandler(void)
+{
+	I2C_EV_IRQHandler(&Sensor_I2C);
 }
 
 void Onboard_Sensor_I2C_IRQHandler(void)

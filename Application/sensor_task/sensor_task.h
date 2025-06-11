@@ -36,6 +36,7 @@ typedef struct _sensor_request_rb_t_
 } sensor_request_rb_t;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+extern sensor_request_rb_t Sensor_LSM6DSOX_rb;
 extern sensor_request_rb_t Onboard_Sensor_H3LIS331DL_rb;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Enum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -50,6 +51,7 @@ void Sensor_Read_Task(void*);
 bool Sensor_Read_Value(Sensor_Read_typedef read_type);
 bool Is_Sensor_Read_Complete(sensor_request_rb_t* p_sensor_rb);
 
+void Sensor_I2C_IRQHandler(void);
 void Onboard_Sensor_I2C_IRQHandler(void);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

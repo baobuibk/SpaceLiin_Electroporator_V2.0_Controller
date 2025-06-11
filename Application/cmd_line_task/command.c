@@ -1443,41 +1443,110 @@ int CMD_MEASURE_IMPEDANCE(int argc, char *argv[])
 /* :::::::::: I2C Sensor Command :::::::: */
 int CMD_GET_SENSOR_GYRO(int argc, char *argv[])
 {
+{
+switch (CMD_process_state)
+{
+case 0:
+{
 	if (argc < 1)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_GYRO;
-	fsp_print(1);
+	Sensor_Read_Value(SENSOR_READ_GYRO);
+	CMD_process_state = 1;
+	return CMDLINE_IS_PROCESSING;
+}
 
-	return CMDLINE_OK;
+
+case 1:
+{
+	if (Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb) == false)
+	{
+		return CMDLINE_IS_PROCESSING;
+	}
+	
+	UART_Printf(CMD_line_handle, "> GYRO x: %dmpds; GYRO y: %dmpds; GYRO z: %dmpds\n", Sensor_Gyro.x, Sensor_Gyro.y, Sensor_Gyro.z);
+	CMD_process_state = 0;
+    return CMDLINE_OK;
+}
+
+default:
+	break;
+}
+return CMDLINE_BAD_CMD;
+}
 }
 
 int CMD_GET_SENSOR_ACCEL(int argc, char *argv[])
 {
-	if (argc < 1)
-		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 1)
-		return CMDLINE_TOO_MANY_ARGS;
-
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_ACCEL;
-	fsp_print(1);
-
-	return CMDLINE_OK;
-}
-
-int CMD_GET_SENSOR_LSM6DSOX(int argc, char *argv[])
+switch (CMD_process_state)
+{
+case 0:
 {
 	if (argc < 1)
 		return CMDLINE_TOO_FEW_ARGS;
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	ps_FSP_TX->CMD = FSP_CMD_GET_SENSOR_LSM6DSOX;
-	fsp_print(1);
+	Sensor_Read_Value(SENSOR_READ_ACCEL);
+	CMD_process_state = 1;
+	return CMDLINE_IS_PROCESSING;
+}
 
-	return CMDLINE_OK;
+
+case 1:
+{
+	if (Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb) == false)
+	{
+		return CMDLINE_IS_PROCESSING;
+	}
+	
+	UART_Printf(CMD_line_handle, "> ACCEL x: %dmg; ACCEL y: %dmg; ACCEL z: %dmg\n", Sensor_Accel.x, Sensor_Accel.y, Sensor_Accel.z);
+	CMD_process_state = 0;
+    return CMDLINE_OK;
+}
+
+default:
+	break;
+}
+return CMDLINE_BAD_CMD;
+}
+
+int CMD_GET_SENSOR_LSM6DSOX(int argc, char *argv[])
+{
+switch (CMD_process_state)
+{
+case 0:
+{
+	if (argc < 1)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 1)
+		return CMDLINE_TOO_MANY_ARGS;
+
+	Sensor_Read_Value(SENSOR_READ_LSM6DSOX);
+	CMD_process_state = 1;
+	return CMDLINE_IS_PROCESSING;
+}
+
+
+case 1:
+{
+	if (Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb) == false)
+	{
+		return CMDLINE_IS_PROCESSING;
+	}
+	
+	UART_Printf(CMD_line_handle, "> GYRO x: %dmpds; GYRO y: %dmpds; GYRO z: %dmpds\n", Sensor_Gyro.x, Sensor_Gyro.y, Sensor_Gyro.z);
+	UART_Printf(CMD_line_handle, "> ACCEL x: %dmg; ACCEL y: %dmg; ACCEL z: %dmg\n", Sensor_Accel.x, Sensor_Accel.y, Sensor_Accel.z);
+	CMD_process_state = 0;
+    return CMDLINE_OK;
+}
+
+default:
+	break;
+}
+return CMDLINE_BAD_CMD;
 }
 
 int CMD_GET_SENSOR_TEMP(int argc, char *argv[])

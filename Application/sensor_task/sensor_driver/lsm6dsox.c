@@ -32,8 +32,16 @@
 #define LSM6DSOX_Y_OFS_USR 				0x74
 #define LSM6DSOX_Z_OFS_USR 				0x75
 
+#define LSM6DSOX_ACCEL_FS_2G			0.061f
+#define LSM6DSOX_ACCEL_FS_4G			0.122f
+#define LSM6DSOX_ACCEL_FS_8G			0.244f
+#define LSM6DSOX_ACCEL_FS_16G			0.488f
+
+#define GYRO_SENSITIVITY_125DPS		    4.375f
+#define GYRO_SENSITIVITY_250DPS		    8.75f
 #define GYRO_SENSITIVITY_500DPS		    17.50f
-#define LSM6DSOX_ACCEL_FS_2G			0.122f
+#define GYRO_SENSITIVITY_1000DPS		35.0f
+#define GYRO_SENSITIVITY_2000DPS		70.0f
 
 #define LSM6DSOX_CALIB_TIMEOUT			5000
 
@@ -62,6 +70,7 @@ static uint8_t Sensor_Read_Value_State = 0;
 // static int16_t Sensor_Calib_Timeout = LSM6DSOX_CALIB_TIMEOUT;
 // static LSM6DSOX_data_typedef Sensor_Calib_Data;
 static float Accel_Calib_Factor = LSM6DSOX_ACCEL_FS_2G;
+static float Gyro_Calib_Factor 	= GYRO_SENSITIVITY_500DPS;
 
 static bool is_LSM6DSOX_Init_Complete  = false;
 static bool is_LSM6DSOX_Write_Complete  = false;
@@ -100,12 +109,19 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 {
 	switch (Sensor_Read_State)
     {
+
 	case 0:
     {
 		memset(Sensor_temp_buffer, 0, sizeof(Sensor_temp_buffer));
 
-		Sensor_temp_buffer[0] = 0x4C;
-		I2C_Mem_Write_IT(p_i2c, LSM6DSOX_ADDR, 0x11, Sensor_temp_buffer, 1, &is_LSM6DSOX_Write_Complete);
+		Sensor_temp_buffer[0] =  0;
+		Sensor_temp_buffer[0] |= (0x1001 << 7); // ACCEL ODR 3.33 kHZ
+		Sensor_temp_buffer[0] |= (0x10 	 << 3); // ACCEL FULL-SCALE +-4g
+		Sensor_temp_buffer[0] |= (0x0    << 1); // ACCEL HIGH-RESOLUTION DISABLE
+
+		I2C_Mem_Write_IT(p_i2c, LSM6DSOX_ADDR, 0x10, Sensor_temp_buffer, 1, &is_LSM6DSOX_Write_Complete);
+		
+		Accel_Calib_Factor = LSM6DSOX_ACCEL_FS_4G;
 		Sensor_Read_State = 1;
 		return 0;
 	}
@@ -117,8 +133,16 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
             return 0;
         }
         
-		Sensor_temp_buffer[0] = 0x9A;
-		I2C_Mem_Write_IT(p_i2c, LSM6DSOX_ADDR, 0x10, Sensor_temp_buffer, 1, &is_LSM6DSOX_Write_Complete);
+		//Sensor_temp_buffer[0] = 0x4C;
+
+		Sensor_temp_buffer[0] =  0;
+		Sensor_temp_buffer[0] |= (0x1001 << 7); // GYRO ODR 3.33 kHZ
+		Sensor_temp_buffer[0] |= (0x01 	 << 3); // GYRO FULL-SCALE +-500dps
+		Sensor_temp_buffer[0] |= (0x0    << 1); // FS_125 DISABLE
+
+		I2C_Mem_Write_IT(p_i2c, LSM6DSOX_ADDR, 0x11, Sensor_temp_buffer, 1, &is_LSM6DSOX_Write_Complete);
+		
+		Gyro_Calib_Factor = GYRO_SENSITIVITY_500DPS;
 		Sensor_Read_State = 2;
 		return 0;
 	}
@@ -143,13 +167,26 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
             return 0;
         }
 
-		Sensor_temp_buffer[0] = 0x09;
+		Sensor_temp_buffer[0] = 0x00;
 		I2C_Mem_Write_IT(p_i2c, LSM6DSOX_ADDR, 0x17, Sensor_temp_buffer, 1, &is_LSM6DSOX_Write_Complete);
 		Sensor_Read_State = 4;
 		return 0;
 	}
 
 	case 4:
+    {
+		if (Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete) == false)
+        {
+            return 0;
+        }
+
+		Sensor_temp_buffer[0] = 0x00;
+		I2C_Mem_Write_IT(p_i2c, LSM6DSOX_ADDR, 0x75, Sensor_temp_buffer, 1, &is_LSM6DSOX_Write_Complete);
+		Sensor_Read_State = 5;
+		return 0;
+	}
+
+	case 5:
     {
         if (Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete) == false)
         {
@@ -317,22 +354,20 @@ static void LSM6DSOX_read_uncompensated_value(i2c_stdio_typedef* p_i2c, Sensor_R
 
 static void LSM6DSOX_compensate_value(Sensor_Read_typedef read_type, uint8_t *p_LSM6DSOX_RX_buffer)
 {
-	uint8_t *p_LSM6DSOX_data;
-	//float data;
-
 	switch (read_type)
     {
 
 	case SENSOR_READ_GYRO:
     {
-		p_LSM6DSOX_data = (uint8_t*) &Sensor_Gyro;
-
-		for (uint8_t i = 0; i < 6; i += 2)
-        {
-			p_LSM6DSOX_data[i] = (int) ((p_LSM6DSOX_RX_buffer[i + 1] << 8)
-					| p_LSM6DSOX_RX_buffer[i]) * GYRO_SENSITIVITY_500DPS;
-		}
-
+		Sensor_Gyro.x = ((p_LSM6DSOX_RX_buffer[1] << 8)
+				| p_LSM6DSOX_RX_buffer[0]);
+		Sensor_Gyro.x *= Gyro_Calib_Factor;
+		Sensor_Gyro.y = ((p_LSM6DSOX_RX_buffer[3] << 8)
+				| p_LSM6DSOX_RX_buffer[2]);
+		Sensor_Gyro.y *= Gyro_Calib_Factor;
+		Sensor_Gyro.z = ((p_LSM6DSOX_RX_buffer[5] << 8)
+				| p_LSM6DSOX_RX_buffer[4]);
+		Sensor_Gyro.z *= Gyro_Calib_Factor;
 		break;
 	}
 
@@ -352,22 +387,25 @@ static void LSM6DSOX_compensate_value(Sensor_Read_typedef read_type, uint8_t *p_
 
 	case SENSOR_READ_LSM6DSOX:
     {
-		p_LSM6DSOX_data = (uint8_t*) &Sensor_Gyro;
+		Sensor_Gyro.x = ((p_LSM6DSOX_RX_buffer[1] << 8)
+				| p_LSM6DSOX_RX_buffer[0]);
+		Sensor_Gyro.x *= Gyro_Calib_Factor;
+		Sensor_Gyro.y = ((p_LSM6DSOX_RX_buffer[3] << 8)
+				| p_LSM6DSOX_RX_buffer[2]);
+		Sensor_Gyro.y *= Gyro_Calib_Factor;
+		Sensor_Gyro.z = ((p_LSM6DSOX_RX_buffer[5] << 8)
+				| p_LSM6DSOX_RX_buffer[4]);
+		Sensor_Gyro.z *= Gyro_Calib_Factor;
 
-		for (uint8_t i = 0; i < 6; i += 2)
-        {
-			p_LSM6DSOX_data[i] = (int) ((p_LSM6DSOX_RX_buffer[i + 1] << 8)
-					| p_LSM6DSOX_RX_buffer[i]) * GYRO_SENSITIVITY_500DPS;
-		}
-
-		p_LSM6DSOX_data = (uint8_t*) &Sensor_Accel;
-
-		for (uint8_t i = 0; i < 6; i += 2)
-        {
-			p_LSM6DSOX_data[i] = (int) ((p_LSM6DSOX_RX_buffer[i + 7] << 8)
-					| p_LSM6DSOX_RX_buffer[i + 6]) * Accel_Calib_Factor;
-		}
-
+		Sensor_Accel.x = ((p_LSM6DSOX_RX_buffer[7] << 8)
+				| p_LSM6DSOX_RX_buffer[6]);
+		Sensor_Accel.x *= Accel_Calib_Factor;
+		Sensor_Accel.y = ((p_LSM6DSOX_RX_buffer[9] << 8)
+				| p_LSM6DSOX_RX_buffer[8]);
+		Sensor_Accel.y *= Accel_Calib_Factor;
+		Sensor_Accel.z = ((p_LSM6DSOX_RX_buffer[11] << 8)
+				| p_LSM6DSOX_RX_buffer[10]);
+		Sensor_Accel.z *= Accel_Calib_Factor;
 		break;
 	}
 
