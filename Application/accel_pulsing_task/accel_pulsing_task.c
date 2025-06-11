@@ -37,8 +37,13 @@ static uint8_t frame_count = 0;
 static void fsp_print(uint8_t packet_length);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+// Remember to change Threshold_Accel in .h file
 H3LIS331DL_data_typedef Threshold_Accel = { 0, 0, 2000 };
 H3LIS331DL_data_typedef Auto_Accel_Data;
+
+#define ACCEL_SENSOR 	ONBOARD_SENSOR_READ_H3LIS331DL
+#define P_ACCEL_REQUEST &Onboard_Sensor_H3LIS331DL_rb
+#define ACCEL_DATA		H3LIS_Accel
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 void Accel_Pulsing_Task(void*)
@@ -58,7 +63,7 @@ void Accel_Pulsing_Task(void*)
 		UART_Send_String(CMD_line_handle, "\e[?25l\r> Accel is: X:       Y:       Z:       ");
 
 		//Is_Sensor_Read_Complete();
-		Sensor_Read_Value(ONBOARD_SENSOR_READ_H3LIS331DL);
+		Sensor_Read_Value(ACCEL_SENSOR);
 		
 		auto_pulsing_state = SEND_RESQUEST_SENSOR;
 		get_sensor_timeout = AUTO_PULSE_TIMEOUT;
@@ -68,10 +73,10 @@ void Accel_Pulsing_Task(void*)
 
 	case SEND_RESQUEST_SENSOR:
 	{
-		if (Is_Sensor_Read_Complete(&Onboard_Sensor_H3LIS331DL_rb) == true)
+		if (Is_Sensor_Read_Complete(P_ACCEL_REQUEST) == true)
 		{
 			// Gửi dữ liệu đọc được từ cảm biến gửi xuống bo dưới
-			Auto_Accel_Data = H3LIS_Accel;
+			Auto_Accel_Data = ACCEL_DATA;
 
 			frame_count++;
 
@@ -80,7 +85,7 @@ void Accel_Pulsing_Task(void*)
 				frame_count = 1;
 			}	
 				
-			UART_Printf(CMD_line_handle, "\033[13G%5d\033[22G%5d\033[31G%5d  %d  ", H3LIS_Accel.x, H3LIS_Accel.y, H3LIS_Accel.z, frame_count);
+			UART_Printf(CMD_line_handle, "\033[13G%5d\033[22G%5d\033[31G%5d  %d  ", ACCEL_DATA.x, ACCEL_DATA.y, ACCEL_DATA.z, frame_count);
 
 			if (Auto_Accel_Data.z >= Threshold_Accel.z)
 			{
@@ -89,7 +94,7 @@ void Accel_Pulsing_Task(void*)
 			}
 			else
 			{
-				Sensor_Read_Value(ONBOARD_SENSOR_READ_H3LIS331DL);
+				Sensor_Read_Value(ACCEL_SENSOR);
 
 				auto_pulsing_state = SEND_RESQUEST_SENSOR;
 				get_sensor_timeout = AUTO_PULSE_TIMEOUT;
@@ -133,7 +138,7 @@ void Accel_Pulsing_Task(void*)
 			return;
 		}
 
-		Sensor_Read_Value(ONBOARD_SENSOR_READ_H3LIS331DL);
+		Sensor_Read_Value(ACCEL_SENSOR);
 
 		auto_pulsing_state = SEND_RESQUEST_SENSOR;
 
@@ -166,6 +171,9 @@ void Enable_Auto_Pulsing()
 void Disable_Auto_Pulsing()
 {
 	is_accel_pulsing_disable = true;
+
+	// move up 1 line, turn off console
+	UART_Send_String(CMD_line_handle, "\e[?25h");
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

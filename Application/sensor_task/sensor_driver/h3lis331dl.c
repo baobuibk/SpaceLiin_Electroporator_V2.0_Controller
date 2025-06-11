@@ -63,7 +63,6 @@ static bool is_H3LIS331DL_Data_Complete  = false;
 static bool H3LIS331DL_is_value_ready(Sensor_Read_typedef read_type, uint8_t *p_status_value);
 static void H3LIS331DL_read_raw_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type, uint8_t *p_H3LIS331DL_RX_buffer);
 static void H3LIS331DL_read_accel_value(Sensor_Read_typedef read_type, uint8_t *p_H3LIS331DL_RX_buffer);
-static bool H3LIS331DL_offset_calib(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 H3LIS331DL_data_typedef H3LIS_Accel;
@@ -620,8 +619,8 @@ static void H3LIS331DL_read_accel_value(Sensor_Read_typedef read_type, uint8_t *
             int32_t accel_z = raw_z * H3LIS331DL_Sensivity; // mg
 
             // Chuyển đổi sang gia tốc (g) với độ nhạy 49 mg/digit (0.049 g/digit)
-            //float sensitivity = H3LIS331DL_Sensivity / 1000.0f; // 49 mg/digit = 0.049 g/digit
-			uint8_t sensitivity = H3LIS331DL_Sensivity; // 49 mg/digit = 0.049 g/digit
+            // float sensitivity = H3LIS331DL_Sensivity / 1000.0f; // 49 mg/digit = 0.049 g/digit
+			// uint8_t sensitivity = H3LIS331DL_Sensivity; // 49 mg/digit = 0.049 g/digit
             H3LIS_Accel.x = accel_x;
             H3LIS_Accel.y = accel_y;
             H3LIS_Accel.z = accel_z;

@@ -144,20 +144,20 @@ static Cap_typedef s_Cap_50V =
     .discharge_PWM_duty = 0,
 };
 
-static Cap_typedef* Cap_array[2] =
+volatile static Cap_typedef* Cap_array[2] =
 {
     &s_Cap_300V,
     &s_Cap_50V,
 };
 
-static uint8_t  Cap_array_index = 0;
+volatile static uint8_t  Cap_array_index = 0;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static void Cap_ADC_Init(uint32_t ADC_Sampling_Time);
 static void Cap_PWM_Init(uint32_t freq_300V, uint32_t freq_50V);
 static void Cap_Discharge_Init(void);
 
-static inline void FlyBack_PID_Compute(Cap_typedef* p_cap_x);
+static inline void FlyBack_PID_Compute(volatile Cap_typedef* p_cap_x);
 static inline void Flyback_Set_Freq(Cap_typedef* p_cap_x, uint32_t _Freq);
 static inline void Flyback_Set_Duty(Cap_typedef* p_cap_x, uint32_t _Duty);
 // static inline void Discharge_Set_Duty(Cap_typedef* p_cap_x);
@@ -563,7 +563,22 @@ void Cap_Controller_ADC_IRQHandler(void)
     {
         LL_ADC_ClearFlag_OVR(ADC_FEEDBACK_HANDLE);
 
-        //LL_GPIO_TogglePin(GPIOC, LL_GPIO_PIN_1);
+        // Reset index để đồng bộ với rank 1
+        Cap_array_index = 0;
+
+        // Dừng để reset sequencer
+        LL_ADC_Disable(ADC_FEEDBACK_HANDLE);
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        __NOP();
+        LL_ADC_Enable(ADC_FEEDBACK_HANDLE);
 
         LL_ADC_REG_StartConversionSWStart(ADC_FEEDBACK_HANDLE);
     }
@@ -577,20 +592,16 @@ void Cap_Controller_ADC_IRQHandler(void)
 
         FlyBack_PID_Compute(Cap_array[Cap_array_index]);
 
-        if(Cap_array_index >= 1)
-        {
-            Cap_array_index = 0;
-        }
-        else
-        {
-            Cap_array_index = Cap_array_index + 1;
-        }
+        Cap_array_index ^= 1;
     }
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static void Cap_ADC_Init(uint32_t ADC_Sampling_Time)
 {
+    // Init the value of the cap array index
+    Cap_array_index = 0;
+
     // The total number of conversions in the regular group, which is 2
     LL_ADC_REG_SetSequencerLength(ADC_FEEDBACK_HANDLE, LL_ADC_REG_SEQ_SCAN_ENABLE_2RANKS);
 
@@ -690,13 +701,13 @@ static void Cap_Discharge_Init(void)
     LL_GPIO_ResetOutputPin(DISCHARGE_50V_PORT, DISCHARGE_50V_PIN);
 }
 
-static inline void FlyBack_PID_Compute(Cap_typedef* p_cap_x)
+static inline void FlyBack_PID_Compute(volatile Cap_typedef* p_cap_x)
 {
     if (p_cap_x->is_charge_on == true)
     {
         PID_Compute(&p_cap_x->charge_PID);
     
-        PWM_TypeDef* PWMx = &p_cap_x->charge_PWM;
+        volatile PWM_TypeDef* PWMx = &p_cap_x->charge_PWM;
         uint32_t _Duty = p_cap_x->charge_PWM_duty;
 
         PWMx->Duty = (PWMx->Freq * (_Duty / 100.0));

@@ -1367,7 +1367,7 @@ int CMD_MEASURE_VOLT(int argc, char *argv[])
 	uint16_t data_tmp[2];
 
 	data_tmp[0] = Cap_Measure_Volt(&g_Cap_300V);
-	data_tmp[1] = Cap_Measure_Volt(&g_Cap_300V);
+	data_tmp[1] = Cap_Measure_Volt(&g_Cap_50V);
 
 	UART_Printf(CMD_line_handle, "> HV cap: %dV, LV cap: %dV\r\n", data_tmp[0], data_tmp[1]);
 
