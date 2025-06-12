@@ -21,6 +21,7 @@
         "accel_pulsing_task.h": "c",
         "cap_calib_task.h": "c",
         "cmd_line_task.h": "c",
-        "uart.h": "c"
+        "uart.h": "c",
+        "bmp3.h": "c"
     }
 }

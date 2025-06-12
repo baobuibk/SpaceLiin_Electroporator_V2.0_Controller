@@ -28,7 +28,7 @@
 #define BMP390_READ_ALL_ADDR_BASE		0x04
 #define BMP390_READ_ALL_REG_SIZE		6
 
-#define SEALEVEL_PRESSURE_HPA 			1037.48
+#define SEALEVEL_PRESSURE_HPA 			1007
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Enum ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -44,22 +44,42 @@ typedef enum _Sensor_common_read_state_typedef_
 
 } Sensor_common_read_state_typedef;
 
+// typedef struct _BMP390_uncomp_data_typedef_
+// {
+// 	uint16_t NVM_PAR_T1;
+// 	uint16_t NVM_PAR_T2;
+// 	uint16_t NVM_PAR_T3;
+// 	uint16_t NVM_PAR_P1;
+// 	uint16_t NVM_PAR_P2;
+// 	uint16_t NVM_PAR_P3;
+// 	uint16_t NVM_PAR_P4;
+// 	uint16_t NVM_PAR_P5;
+// 	uint16_t NVM_PAR_P6;
+// 	uint16_t NVM_PAR_P7;
+// 	uint16_t NVM_PAR_P8;
+// 	uint16_t NVM_PAR_P9;
+// 	uint16_t NVM_PAR_P10;
+// 	uint16_t NVM_PAR_P11;
+
+// } BMP390_uncomp_data_typedef;
+
 typedef struct _BMP390_uncomp_data_typedef_
 {
-	uint16_t NVM_PAR_T1;
-	uint16_t NVM_PAR_T2;
-	uint16_t NVM_PAR_T3;
-	uint16_t NVM_PAR_P1;
-	uint16_t NVM_PAR_P2;
-	uint16_t NVM_PAR_P3;
-	uint16_t NVM_PAR_P4;
-	uint16_t NVM_PAR_P5;
-	uint16_t NVM_PAR_P6;
-	uint16_t NVM_PAR_P7;
-	uint16_t NVM_PAR_P8;
-	uint16_t NVM_PAR_P9;
-	uint16_t NVM_PAR_P10;
-	uint16_t NVM_PAR_P11;
+	uint16_t 	NVM_PAR_T1;
+    uint16_t 	NVM_PAR_T2;
+    int8_t 		NVM_PAR_T3;
+
+    int16_t 	NVM_PAR_P1;
+    int16_t 	NVM_PAR_P2;
+    int8_t 		NVM_PAR_P3;
+    int8_t 		NVM_PAR_P4;
+    uint16_t 	NVM_PAR_P5;
+    uint16_t 	NVM_PAR_P6;
+    int8_t 		NVM_PAR_P7;
+    int8_t 		NVM_PAR_P8;
+    int16_t 	NVM_PAR_P9;
+    int8_t 		NVM_PAR_P10;
+    int8_t 		NVM_PAR_P11;
 
 } BMP390_uncomp_data_typedef;
 
@@ -68,6 +88,7 @@ typedef struct _BMP390_comp_data_typedef_
 	double PAR_T1;
 	double PAR_T2;
 	double PAR_T3;
+
 	double PAR_P1;
 	double PAR_P2;
 	double PAR_P3;
@@ -145,7 +166,11 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 		memset(Sensor_temp_buffer, 0, sizeof(Sensor_temp_buffer));
 
 		//set oversampling
-		Sensor_temp_buffer[0] = 11;
+		//Sensor_temp_buffer[0] = 11;
+		Sensor_temp_buffer[0] = 0;
+		Sensor_temp_buffer[0] |= (0b101 << 2); 	// osr_p [2..0] = 101
+		Sensor_temp_buffer[0] |= (0b010 << 5); 	// osr4_t[5..3] = 010
+
 		I2C_Mem_Write_IT(p_i2c, BMP390_ADDR, 0x1C, Sensor_temp_buffer, 1, &is_BMP390_Write_Complete);
 		Sensor_Read_State = 1;
 		return 0;
@@ -171,7 +196,9 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
             return 0;
         }
 
-		Sensor_temp_buffer[0] |= 0b00001110;
+		//Sensor_temp_buffer[0] = (0b111 << 3); // iir_filter[3..1] = 111
+		Sensor_temp_buffer[0] = (0b011 << 3); // iir_filter[3..1] = 011
+		//Sensor_temp_buffer[0] = (0b000 << 3); // iir_filter[3..1] = 000
 		I2C_Mem_Write_IT(p_i2c, BMP390_ADDR, 0x1F, Sensor_temp_buffer, 1, &is_BMP390_Write_Complete);
 		Sensor_Read_State = 3;
 		return 0;
@@ -551,24 +578,20 @@ static void BMP390_compensate_pressure(double uncomp_pressure)
 
 	PAR_T1 = BMP390_data.comp_data.PAR_P6 * (Sensor_Temp);
 	PAR_T2 = BMP390_data.comp_data.PAR_P7 * (Sensor_Temp * Sensor_Temp);
-	PAR_T3 = BMP390_data.comp_data.PAR_P8
-			* (Sensor_Temp * Sensor_Temp * Sensor_Temp);
+	PAR_T3 = BMP390_data.comp_data.PAR_P8 * (Sensor_Temp * Sensor_Temp * Sensor_Temp);
+
 	PAR_OUT1 = BMP390_data.comp_data.PAR_P5 + PAR_T1 + PAR_T2 + PAR_T3;
 
 	PAR_T1 = BMP390_data.comp_data.PAR_P2 * (Sensor_Temp);
 	PAR_T2 = BMP390_data.comp_data.PAR_P3 * (Sensor_Temp * Sensor_Temp);
-	PAR_T3 = BMP390_data.comp_data.PAR_P4
-			* (Sensor_Temp * Sensor_Temp * Sensor_Temp);
-	PAR_OUT2 = uncomp_pressure
-			* (BMP390_data.comp_data.PAR_P1 + PAR_T1 + PAR_T2 + PAR_T3);
+	PAR_T3 = BMP390_data.comp_data.PAR_P4 * (Sensor_Temp * Sensor_Temp * Sensor_Temp);
+	
+	PAR_OUT2 = uncomp_pressure * (BMP390_data.comp_data.PAR_P1 + PAR_T1 + PAR_T2 + PAR_T3);
 
 	PAR_T1 = uncomp_pressure * uncomp_pressure;
-	PAR_T2 = BMP390_data.comp_data.PAR_P9
-			+ BMP390_data.comp_data.PAR_P10 * Sensor_Temp;
+	PAR_T2 = BMP390_data.comp_data.PAR_P9 + BMP390_data.comp_data.PAR_P10 * Sensor_Temp;
 	PAR_T3 = PAR_T1 * PAR_T2;
-	PAR_OUT3 = PAR_T3
-			+ (uncomp_pressure * uncomp_pressure * uncomp_pressure)
-					* BMP390_data.comp_data.PAR_P11;
+	PAR_OUT3 = PAR_T3 + (uncomp_pressure * uncomp_pressure * uncomp_pressure) * BMP390_data.comp_data.PAR_P11;
 
 	Sensor_Pressure = PAR_OUT1 + PAR_OUT2 + PAR_OUT3;
 }
