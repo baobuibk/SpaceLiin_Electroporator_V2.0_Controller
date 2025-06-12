@@ -303,7 +303,7 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 7:
     {
-		if (Is_I2C_Write_Complete(&is_BMP390_Read_Complete) == false)
+		if (Is_I2C_Write_Complete(&is_BMP390_Write_Complete) == false)
         {
             return 0;
         }
