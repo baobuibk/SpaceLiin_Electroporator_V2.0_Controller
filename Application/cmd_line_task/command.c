@@ -734,9 +734,9 @@ int CMD_SET_PULSE_LV_POS(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 90) || (receive_argm[0] < 1))
+	if ((receive_argm[0] > 90) || (receive_argm[0] < 5))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 90) || (receive_argm[1] < 1))
+	else if ((receive_argm[1] > 90) || (receive_argm[1] < 5))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
@@ -774,9 +774,9 @@ int CMD_SET_PULSE_LV_NEG(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 90) || (receive_argm[0] < 1))
+	if ((receive_argm[0] > 90) || (receive_argm[0] < 5))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 90) || (receive_argm[1] < 1))
+	else if ((receive_argm[1] > 90) || (receive_argm[1] < 5))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
@@ -1170,17 +1170,24 @@ int CMD_GET_PULSE_ALL(int argc, char *argv[])
 /* :::::::::: Auto Pulsing Command :::::::::: */
 int CMD_SET_THRESHOLD_ACCEL(int argc, char *argv[])
 {
-	if (argc < 4)
+	if (argc < 2)
 		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 4)
+	else if (argc > 2)
 		return CMDLINE_TOO_MANY_ARGS;
 
-	int16_t x = (int16_t)atoi(argv[1]);
-	int16_t y = (int16_t)atoi(argv[2]);
-	int16_t z = (int16_t)atoi(argv[3]);
+	//int16_t x = (int16_t)atoi(argv[1]);
+	//int16_t y = (int16_t)atoi(argv[2]);
+	//int16_t z = (int16_t)atoi(argv[3]);
 
-	Threshold_Accel.x = x;
-	Threshold_Accel.y = y;
+	int16_t z = (int16_t)atoi(argv[1]);
+
+	if (z < 1)
+		return CMDLINE_INVALID_ARG;
+	else if (z > 2000)
+		return CMDLINE_INVALID_ARG;
+	
+	Threshold_Accel.x = 5;
+	Threshold_Accel.y = 5;
 	Threshold_Accel.z = z;
 
 	return CMDLINE_OK;
@@ -1207,6 +1214,13 @@ int CMD_SET_AUTO_ACCEL(int argc, char *argv[])
 		return CMDLINE_TOO_MANY_ARGS;
 	
 	int8_t receive_argm = atoi(argv[1]);
+
+	if ((receive_argm == 1) && (is_h_bridge_enable == 1))
+	{
+		UART_Send_String(CMD_line_handle, "> H BRIDGE IS CURRENTLY PULSING\n");
+		UART_Send_String(CMD_line_handle, "> YOUR SET_AUTO_ACCEL COMMAND IS CANCLED\n");
+		return CMDLINE_BAD_CMD;
+	}
 
 	if ((receive_argm > 1) || (receive_argm < 0))
 		return CMDLINE_INVALID_ARG;
@@ -1277,87 +1291,93 @@ int CMD_SET_AUTO_ACCEL(int argc, char *argv[])
 /* :::::::::: Manual Pulse Command :::::::::: */
 int CMD_SET_MANUAL_POLE(int argc, char *argv[])
 {
-	if (argc < 3)
-		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 3)
-		return CMDLINE_TOO_MANY_ARGS;
+	// if (argc < 3)
+	// 	return CMDLINE_TOO_FEW_ARGS;
+	// else if (argc > 3)
+	// 	return CMDLINE_TOO_MANY_ARGS;
 
-	int receive_argm[2];
+	// int receive_argm[2];
 
-	receive_argm[0] = atoi(argv[1]);
-	receive_argm[1] = atoi(argv[2]);
+	// receive_argm[0] = atoi(argv[1]);
+	// receive_argm[1] = atoi(argv[2]);
 
-	if (receive_argm[0] == receive_argm[1])
-		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[0] > 8) || (receive_argm[0] < 1) || (receive_argm[0] == 9))
-		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 8) || (receive_argm[1] < 1) || (receive_argm[1] == 9))
-		return CMDLINE_INVALID_ARG;
+	// if (receive_argm[0] == receive_argm[1])
+	// 	return CMDLINE_INVALID_ARG;
+	// else if ((receive_argm[0] > 8) || (receive_argm[0] < 1) || (receive_argm[0] == 9))
+	// 	return CMDLINE_INVALID_ARG;
+	// else if ((receive_argm[1] > 8) || (receive_argm[1] < 1) || (receive_argm[1] == 9))
+	// 	return CMDLINE_INVALID_ARG;
 
-	ps_FSP_TX->CMD = FSP_CMD_SET_MANUAL_POLE;
-	ps_FSP_TX->Payload.set_manual_pole.pos_pole = ChannelMapping[receive_argm[0] - 1];
-	ps_FSP_TX->Payload.set_manual_pole.neg_pole = ChannelMapping[receive_argm[1] - 1];
+	// ps_FSP_TX->CMD = FSP_CMD_SET_MANUAL_POLE;
+	// ps_FSP_TX->Payload.set_manual_pole.pos_pole = ChannelMapping[receive_argm[0] - 1];
+	// ps_FSP_TX->Payload.set_manual_pole.neg_pole = ChannelMapping[receive_argm[1] - 1];
 
-	fsp_print(3);
+	// fsp_print(3);
 
-	return CMDLINE_OK;
+	// return CMDLINE_OK;
+
+	return CMDLINE_BAD_CMD;
 }
 
 int CMD_SET_MANUAL_CAP(int argc, char *argv[])
 {
-	if (is_h_bridge_enable == true)
-	{
-		UART_Send_String(&RS232_UART, "> ERROR: H BRIDGE IS RUNNING\n");
-		return CMDLINE_INVALID_CMD;
-	}
+	// if (is_h_bridge_enable == true)
+	// {
+	// 	UART_Send_String(&RS232_UART, "> ERROR: H BRIDGE IS RUNNING\n");
+	// 	return CMDLINE_INVALID_CMD;
+	// }
 	
-	if (argc < 2)
-		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 2)
-		return CMDLINE_TOO_MANY_ARGS;
+	// if (argc < 2)
+	// 	return CMDLINE_TOO_FEW_ARGS;
+	// else if (argc > 2)
+	// 	return CMDLINE_TOO_MANY_ARGS;
 
-	uint8_t receive_argm;
+	// uint8_t receive_argm;
 
-	receive_argm = atoi(argv[1]);
+	// receive_argm = atoi(argv[1]);
 
-	if ((receive_argm > 3) || (receive_argm < 0))
-		return CMDLINE_INVALID_ARG;
+	// if ((receive_argm > 3) || (receive_argm < 0))
+	// 	return CMDLINE_INVALID_ARG;
 	
-	ps_FSP_TX->CMD = FSP_CMD_SET_MANUAL_CAP;
-	ps_FSP_TX->Payload.set_manual_cap.Which_Cap = receive_argm;
+	// ps_FSP_TX->CMD = FSP_CMD_SET_MANUAL_CAP;
+	// ps_FSP_TX->Payload.set_manual_cap.Which_Cap = receive_argm;
 
-	fsp_print(2);
-	return CMDLINE_OK;
+	// fsp_print(2);
+	// return CMDLINE_OK;
+
+	return CMDLINE_BAD_CMD;
 }
 
 int CMD_SET_MANUAL_PULSE(int argc, char *argv[])
 {
-	if (is_h_bridge_enable == true)
-	{
-		UART_Send_String(&RS232_UART, "> ERROR: H BRIDGE IS RUNNING\n");
-		return CMDLINE_INVALID_CMD;
-	}
+	// if (is_h_bridge_enable == true)
+	// {
+	// 	UART_Send_String(&RS232_UART, "> ERROR: H BRIDGE IS RUNNING\n");
+	// 	return CMDLINE_INVALID_CMD;
+	// }
 
-	if (argc < 2)
-		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 2)
-		return CMDLINE_TOO_MANY_ARGS;
+	// if (argc < 2)
+	// 	return CMDLINE_TOO_FEW_ARGS;
+	// else if (argc > 2)
+	// 	return CMDLINE_TOO_MANY_ARGS;
 
-	uint8_t receive_argm;
+	// uint8_t receive_argm;
 
-	receive_argm = atoi(argv[1]);
+	// receive_argm = atoi(argv[1]);
 
-	if ((receive_argm > 1) || (receive_argm < 0))
-		return CMDLINE_INVALID_ARG;
+	// if ((receive_argm > 1) || (receive_argm < 0))
+	// 	return CMDLINE_INVALID_ARG;
 
 
-	is_manual_mode_enable = receive_argm;
+	// is_manual_mode_enable = receive_argm;
 
-	ps_FSP_TX->CMD = FSP_CMD_SET_MANUAL_PULSE;
-	ps_FSP_TX->Payload.set_manual_pulse.State = receive_argm;
+	// ps_FSP_TX->CMD = FSP_CMD_SET_MANUAL_PULSE;
+	// ps_FSP_TX->Payload.set_manual_pulse.State = receive_argm;
 
-	fsp_print(2);
-	return CMDLINE_OK;
+	// fsp_print(2);
+	// return CMDLINE_OK;
+
+	return CMDLINE_BAD_CMD;
 }
 
 /* :::::::::: VOM Command :::::::: */

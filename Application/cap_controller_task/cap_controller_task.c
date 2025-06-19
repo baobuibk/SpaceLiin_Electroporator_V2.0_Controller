@@ -574,10 +574,6 @@ void Cap_Controller_ADC_IRQHandler(void)
         __NOP();
         __NOP();
         __NOP();
-        __NOP();
-        __NOP();
-        __NOP();
-        __NOP();
         LL_ADC_Enable(ADC_FEEDBACK_HANDLE);
 
         LL_ADC_REG_StartConversionSWStart(ADC_FEEDBACK_HANDLE);

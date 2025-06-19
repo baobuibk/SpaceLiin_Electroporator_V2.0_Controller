@@ -35,7 +35,7 @@ void PID_Init(PID_TypeDef *uPID)
 }
 
 /* :::::::::: PID Compute :::::::::: */
-bool PID_Compute(volatile PID_TypeDef *uPID)
+bool PID_Compute(PID_TypeDef *uPID)
 {
 
 	int16_t input;
