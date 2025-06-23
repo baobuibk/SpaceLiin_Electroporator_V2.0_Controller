@@ -8,6 +8,12 @@
 #include "i2c.h"
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+typedef enum _Sensor_Return_Code_typedef_
+{
+	SENSOR_OK,
+	SENSOR_ERROR_NOT_CONNECTED,
+}
+
 typedef enum _Sensor_Read_typedef_
 {
 	/* :::::::::: LSM6DSOX Read Data Type :::::::: */

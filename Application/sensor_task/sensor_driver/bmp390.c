@@ -123,6 +123,7 @@ static bool is_BMP390_Write_Complete = false;
 static bool is_BMP390_Read_Complete  = false;
 static bool is_BMP390_Calib_Complete = false;
 
+static i2c_result_t BMP390_I2C_return_code = I2C_OK;
 static bool is_BMP390_Data_Complete  = false;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

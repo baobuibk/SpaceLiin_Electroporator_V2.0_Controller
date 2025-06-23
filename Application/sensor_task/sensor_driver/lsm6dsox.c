@@ -77,6 +77,7 @@ static bool is_LSM6DSOX_Write_Complete  = false;
 static bool is_LSM6DSOX_Read_Complete  = false;
 static bool is_LSM6DSOX_Calib_Complete = false;
 
+static i2c_result_t LSM6DSOX_I2C_return_code = I2C_OK;
 static bool is_LSM6DSOX_Data_Complete = false;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

@@ -13,9 +13,8 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 typedef enum
 {
-	I2C_WAIT,
 	I2C_OK,
-	I2C_FAIL,
+	I2C_ERROR_NOT_CONNECTED,
 } i2c_result_t;
 
 typedef struct
@@ -24,9 +23,10 @@ typedef struct
 	volatile uint8_t mem_address;
 	volatile uint8_t write_or_read;
 
-	volatile uint8_t *p_dev_buffer;
-	volatile uint8_t dev_buffer_size;
-	volatile bool*   p_is_complete;
+	volatile uint8_t        *p_dev_buffer;
+	volatile uint8_t        dev_buffer_size;
+	volatile bool*          p_is_complete;
+    volatile i2c_result_t*  p_return_code;
 } I2C_data_t;
 
 typedef struct _i2c_stdio_typedef
