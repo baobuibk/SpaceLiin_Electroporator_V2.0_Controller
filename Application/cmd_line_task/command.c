@@ -77,6 +77,10 @@ tCmdLineEntry g_psCmdTable[] =
 		{ "MEASURE_CURRENT",		CMD_MEASURE_CURRENT,		" : Measure cuvette current"},
 		{ "MEASURE_IMPEDANCE", 		CMD_MEASURE_IMPEDANCE,		" : Measure cuvette impedance"},
 
+		{ "SET_CURRENT_LIMIT", 		CMD_SET_CURRENT_LIMIT,		" : Set output current limit"},
+
+		{ "GET_CURRENT_LIMIT", 		CMD_GET_CURRENT_LIMIT,		" : Get output current limit"},
+
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ I2C Sensor Command ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 		{ "GET_SENSOR_GYRO", 		CMD_GET_SENSOR_GYRO, 		" : Get gyro" },
 		{ "GET_SENSOR_ACCEL", 		CMD_GET_SENSOR_ACCEL, 		" : Get accel" },
@@ -145,6 +149,9 @@ bool is_measure_impedance_enable = false;
 bool is_cap_release_after_measure = false;
 
 bool is_streaming_enable = false;
+
+uint8_t current_limit_A  = 5;
+uint8_t current_limit_mA = 0;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: Cap Control Command :::::::: */
@@ -1460,6 +1467,50 @@ int CMD_MEASURE_IMPEDANCE(int argc, char *argv[])
 	//is_300V_notified_enable = true;
 
 	SchedulerTaskEnable(IMPEDANCE_TASK, 1);
+
+	return CMDLINE_OK;
+}
+
+int CMD_SET_CURRENT_LIMIT(int argc, char *argv[])
+{
+	if (argc < 3)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 3)
+		return CMDLINE_TOO_MANY_ARGS;
+
+	int receive_argm[2];
+
+	receive_argm[0]  = atoi(argv[1]);
+	receive_argm[1]  = atoi(argv[2]);
+
+	if ((receive_argm[0] > 11) || (receive_argm[0] < 1))
+		return CMDLINE_INVALID_ARG;
+
+	if ((receive_argm[1] > 9) || (receive_argm[1] < 0))
+		return CMDLINE_INVALID_ARG;
+
+	if ((receive_argm[0] == 11) && (receive_argm[1] > 7))
+		return CMDLINE_INVALID_ARG;
+
+	current_limit_A  = receive_argm[0];
+	current_limit_mA = receive_argm[1];
+
+	ps_FSP_TX->CMD = FSP_CMD_SET_CURRENT_LIMIT;
+	ps_FSP_TX->Payload.set_current_limit.Current_A = receive_argm[0];
+	ps_FSP_TX->Payload.set_current_limit.Current_mA= receive_argm[1];
+
+	fsp_print(3);
+	return CMDLINE_OK;
+}
+
+int CMD_GET_CURRENT_LIMIT(int argc, char *argv[])
+{
+	if (argc < 1)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 1)
+		return CMDLINE_TOO_MANY_ARGS;
+
+	UART_Printf(CMD_line_handle, "> OUTPUT CURRENT LIMIT SET AT: %d,%dA", current_limit_A, current_limit_mA);
 
 	return CMDLINE_OK;
 }
