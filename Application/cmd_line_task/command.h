@@ -119,7 +119,10 @@ int CMD_MEASURE_CURRENT(int argc, char *argv[]);
 int CMD_MEASURE_IMPEDANCE(int argc, char *argv[]);
 
 int CMD_SET_CURRENT_LIMIT(int argc, char *argv[]);
+int CMD_RESET_OVC_FLAG(int argc, char *argv[]);
+
 int CMD_GET_CURRENT_LIMIT(int argc, char *argv[]);
+int CMD_GET_OVC_FLAG(int argc, char *argv[]);
 
 /* :::::::::: I2C Sensor Command :::::::: */
 int CMD_GET_SENSOR_GYRO(int argc, char *argv[]);

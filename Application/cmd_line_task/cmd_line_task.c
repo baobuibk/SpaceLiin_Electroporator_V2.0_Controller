@@ -82,7 +82,7 @@ const char SPLASH[][65] =
 };
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-static void         CMD_send_splash(uart_stdio_typedef* p_uart);
+//static void         CMD_send_splash(uart_stdio_typedef* p_uart);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 uint8_t g_RS232_CMD_line_return = CMDLINE_OK;
@@ -491,13 +491,13 @@ void RF_IRQHandler(void)
 
 
 
-static void CMD_send_splash(uart_stdio_typedef* p_uart)
-{
-    for(uint8_t i = 0 ; i < 21 ; i++)
-    {
-		UART_Send_String(p_uart, &SPLASH[i][0]);
-	}
-	UART_Send_String(p_uart, "> ");
-}
+//static void CMD_send_splash(uart_stdio_typedef* p_uart)
+//{
+//    for(uint8_t i = 0 ; i < 21 ; i++)
+//    {
+//		UART_Send_String(p_uart, &SPLASH[i][0]);
+//	}
+//	UART_Send_String(p_uart, "> ");
+//}
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

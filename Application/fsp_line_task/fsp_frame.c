@@ -18,7 +18,7 @@
 // extern Accel_Gyro_DataTypedef _gyro, _accel;
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static void fsp_print(uint8_t packet_length);
-static void convertArrayToInteger(uint8_t array[], void* p_output, uint8_t length, uint8_t output_size);
+//static void convertArrayToInteger(uint8_t array[], void* p_output, uint8_t length, uint8_t output_size);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 extern uint8_t is_cap_release_after_measure;
@@ -34,7 +34,7 @@ uint16_t delay_ms = 0;
 uint16_t FSP_lv_on_time_ms, FSP_lv_off_time_ms;
 
 void FSP_Line_Process() {
-	int16_t x,y,z;
+	//int16_t x,y,z;
 	switch (ps_FSP_RX->CMD)
 	{
 
@@ -100,7 +100,7 @@ void FSP_Line_Process() {
 
 	case FSP_CMD_OVER_CURRENT_DETECT:
 	{
-		if (ps_FSP_RX->Payload.ovc_current_detect.OVC_signal == false)
+		if (ps_FSP_RX->Payload.ovc_current_detect.OVC_flag_signal == false)
 		{
 			break;
 		}
@@ -137,33 +137,33 @@ static void fsp_print(uint8_t packet_length)
 	UART_FSP(&GPP_UART, (char*)encoded_frame, frame_len);
 }
 
-static void convertArrayToInteger(uint8_t array[], void* p_output, uint8_t length, uint8_t output_size)
-{
-	uint32_t temp_output = 0;
-
-	for (int8_t i = (length - 1); i >= 0; i--)
-	{
-		temp_output <<= 8;
-		temp_output |=  array[i];
-	}
-
-	switch (output_size)
-	{
-	case sizeof(uint16_t):
-	{
-		*(uint16_t *)p_output = (uint16_t)temp_output;
-		break;
-	}
-
-	case sizeof(uint32_t):
-	{
-		*(uint32_t *)p_output = temp_output;
-		break;
-	}
-		
-	default:
-		break;
-	}
-}
+//static void convertArrayToInteger(uint8_t array[], void* p_output, uint8_t length, uint8_t output_size)
+//{
+//	uint32_t temp_output = 0;
+//
+//	for (int8_t i = (length - 1); i >= 0; i--)
+//	{
+//		temp_output <<= 8;
+//		temp_output |=  array[i];
+//	}
+//
+//	switch (output_size)
+//	{
+//	case sizeof(uint16_t):
+//	{
+//		*(uint16_t *)p_output = (uint16_t)temp_output;
+//		break;
+//	}
+//
+//	case sizeof(uint32_t):
+//	{
+//		*(uint32_t *)p_output = temp_output;
+//		break;
+//	}
+//
+//	default:
+//		break;
+//	}
+//}
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

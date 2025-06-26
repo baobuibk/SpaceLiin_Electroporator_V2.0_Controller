@@ -78,8 +78,10 @@ tCmdLineEntry g_psCmdTable[] =
 		{ "MEASURE_IMPEDANCE", 		CMD_MEASURE_IMPEDANCE,		" : Measure cuvette impedance"},
 
 		{ "SET_CURRENT_LIMIT", 		CMD_SET_CURRENT_LIMIT,		" : Set output current limit"},
+		{ "RESET_OVC_FLAG", 		CMD_RESET_OVC_FLAG,			" : Reset current OVC flag"},
 
 		{ "GET_CURRENT_LIMIT", 		CMD_GET_CURRENT_LIMIT,		" : Get output current limit"},
+		{ "GET_OVC_FLAG", 			CMD_GET_OVC_FLAG,			" : Get output current limit"},
 
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ I2C Sensor Command ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 		{ "GET_SENSOR_GYRO", 		CMD_GET_SENSOR_GYRO, 		" : Get gyro" },
@@ -152,6 +154,8 @@ bool is_streaming_enable = false;
 
 uint8_t current_limit_A  = 5;
 uint8_t current_limit_mA = 0;
+
+bool 	OVC_flag_signal = false;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: Cap Control Command :::::::: */
@@ -1503,6 +1507,20 @@ int CMD_SET_CURRENT_LIMIT(int argc, char *argv[])
 	return CMDLINE_OK;
 }
 
+int CMD_RESET_OVC_FLAG(int argc, char *argv[])
+{
+	if (argc < 1)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 1)
+		return CMDLINE_TOO_MANY_ARGS;
+
+	ps_FSP_TX->CMD 					 = FSP_CMD_OVER_CURRENT_DETECT;
+	ps_FSP_TX->Payload.ovc_current_detect.is_OVC_flag_reset = true;
+
+	fsp_print(3);
+	return CMDLINE_OK;
+}
+
 int CMD_GET_CURRENT_LIMIT(int argc, char *argv[])
 {
 	if (argc < 1)
@@ -1511,6 +1529,25 @@ int CMD_GET_CURRENT_LIMIT(int argc, char *argv[])
 		return CMDLINE_TOO_MANY_ARGS;
 
 	UART_Printf(CMD_line_handle, "> OUTPUT CURRENT LIMIT SET AT: %d,%dA", current_limit_A, current_limit_mA);
+
+	return CMDLINE_OK;
+}
+
+int CMD_GET_OVC_FLAG(int argc, char *argv[])
+{
+	if (argc < 1)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 1)
+		return CMDLINE_TOO_MANY_ARGS;
+	
+	if (OVC_flag_signal == true)
+	{
+		UART_Send_String(CMD_line_handle, "> CURRENT OVC FLAG IS TRUE\n");
+	}
+	else
+	{
+		UART_Send_String(CMD_line_handle, "> CURRENT OVC FLAG IS FALSE\n");
+	}
 
 	return CMDLINE_OK;
 }
