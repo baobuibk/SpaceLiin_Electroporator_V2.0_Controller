@@ -48,7 +48,7 @@ H3LIS331DL_data_typedef Auto_Accel_Data;
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 void Accel_Pulsing_Task(void*)
 {
-	if (is_accel_pulsing_disable)
+	if (is_accel_pulsing_disable == true)
 	{
 		SchedulerTaskDisable(ACCEL_PULSING_TASK);
 		auto_pulsing_state = DISABLE_AUTO_PULSING;
@@ -73,9 +73,21 @@ void Accel_Pulsing_Task(void*)
 
 	case SEND_RESQUEST_SENSOR:
 	{
-		if (Is_Sensor_Read_Complete(P_ACCEL_REQUEST) == true)
+		i2c_result_t return_value = Is_Sensor_Read_Complete(P_ACCEL_REQUEST);
+		
+		if (return_value == I2C_IS_RUNNING)
 		{
-			// Gửi dữ liệu đọc được từ cảm biến gửi xuống bo dưới
+			break;
+		}
+		else if (return_value != I2C_OK)
+		{
+			get_sensor_timeout = AUTO_PULSE_TIMEOUT;
+			auto_pulsing_state = SENSOR_ERROR;
+			break;
+		}
+		else if (return_value == I2C_OK)
+		{
+			// Lấy dữ liệu và in liên tục ra màn hình
 			Auto_Accel_Data = ACCEL_DATA;
 
 			frame_count++;
@@ -148,6 +160,14 @@ void Accel_Pulsing_Task(void*)
 
 	case SENSOR_ERROR:
 	{
+		is_accel_pulsing_disable = true;
+
+		// move up 1 line, turn off console
+		UART_Send_String(CMD_line_handle, "\e[?25h");
+
+		SchedulerTaskDisable(ACCEL_PULSING_TASK);
+		auto_pulsing_state = DISABLE_AUTO_PULSING;
+
 		break;
 	}
 
