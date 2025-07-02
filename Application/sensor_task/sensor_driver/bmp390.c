@@ -115,16 +115,17 @@ static uint8_t Sensor_temp_buffer[30];
 static uint8_t Sensor_Read_State = 0;
 //static uint8_t Sensor_Read_Value_State = 0;
 //static uint8_t Sensor_Init_State = 0;
+static uint8_t Sensor_Bus_Busy_count = 0;
+static uint8_t Sensor_Bus_Busy_count_limit = 100;
 
 static BMP390_data_typedef BMP390_data;
 
-static bool is_BMP390_Init_Complete  = false;
-static bool is_BMP390_Write_Complete = false;
-static bool is_BMP390_Read_Complete  = false;
-static bool is_BMP390_Calib_Complete = false;
+static i2c_result_t is_BMP390_Init_Complete  = I2C_IS_RUNNING;
+static i2c_result_t is_BMP390_Write_Complete = I2C_IS_RUNNING;
+static i2c_result_t is_BMP390_Read_Complete  = I2C_IS_RUNNING;
+static i2c_result_t is_BMP390_Calib_Complete = I2C_IS_RUNNING;
 
-static i2c_result_t BMP390_I2C_return_code = I2C_OK;
-static bool is_BMP390_Data_Complete  = false;
+static i2c_result_t is_BMP390_Data_Complete  = I2C_IS_RUNNING;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static bool BMP390_is_value_ready
@@ -157,8 +158,30 @@ double Sensor_Altitude = 0.0;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: BMP390 Command :::::::: */
-bool BMP390_init(i2c_stdio_typedef* p_i2c)
+uint8_t BMP390_init(i2c_stdio_typedef* p_i2c)
 {
+	i2c_result_t return_value = I2C_IS_RUNNING;
+
+	if (LL_I2C_IsActiveFlag_BUSY(p_i2c->handle) == 1)
+    {
+        Sensor_Bus_Busy_count++;
+
+        if (Sensor_Bus_Busy_count < Sensor_Bus_Busy_count_limit)
+        {
+            is_BMP390_Init_Complete = I2C_IS_RUNNING;
+            return I2C_IS_RUNNING;
+        }
+
+        Sensor_Bus_Busy_count = 0;
+
+        Sensor_Read_State = 0;
+
+        is_BMP390_Init_Complete = I2C_ERROR_BUS_BUSY;
+        return is_BMP390_Init_Complete;
+    }
+
+	Sensor_Bus_Busy_count = 0;
+
 	switch (Sensor_Read_State)
     {
 	case 0:
@@ -179,9 +202,10 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 1:
     {
-		if (Is_I2C_Write_Complete(&is_BMP390_Write_Complete) == false)
+		return_value = Is_I2C_Write_Complete(&is_BMP390_Write_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		//set filter
@@ -192,9 +216,10 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 2:
     {
-		if (Is_I2C_Read_Complete(&is_BMP390_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		//Sensor_temp_buffer[0] = (0b111 << 3); // iir_filter[3..1] = 111
@@ -207,9 +232,10 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 3:
     {
-		if (Is_I2C_Write_Complete(&is_BMP390_Write_Complete) == false)
+		return_value = Is_I2C_Write_Complete(&is_BMP390_Write_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		I2C_Mem_Read_IT(p_i2c, BMP390_ADDR, 0x31, Sensor_temp_buffer, 21, &is_BMP390_Read_Complete);
@@ -219,9 +245,10 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 4:
     {
-		if (Is_I2C_Read_Complete(&is_BMP390_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		BMP390_data.uncomp_data.NVM_PAR_T1 = (Sensor_temp_buffer[1] << 8)
@@ -318,9 +345,10 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 6:
     {
-		if (Is_I2C_Read_Complete(&is_BMP390_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		Sensor_temp_buffer[0] |= 0b00010011;
@@ -331,9 +359,10 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 7:
     {
-		if (Is_I2C_Write_Complete(&is_BMP390_Write_Complete) == false)
+		return_value = Is_I2C_Write_Complete(&is_BMP390_Write_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		BMP390_read_uncompensated_value(p_i2c, SENSOR_READ_BMP390, &Sensor_temp_buffer[1]);
@@ -343,9 +372,10 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 
 	case 8:
     {
-		if (Is_I2C_Read_Complete(&is_BMP390_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		BMP390_compensate_value(SENSOR_READ_BMP390, &Sensor_temp_buffer[1]);
@@ -360,10 +390,40 @@ bool BMP390_init(i2c_stdio_typedef* p_i2c)
 	default:
 		return 0;
 	}
+
+	if (return_value != I2C_IS_RUNNING)
+	{
+		Sensor_Read_State = 0;
+	}
+
+	is_BMP390_Init_Complete = return_value;
+    return return_value;
 }
 
-bool BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
+uint8_t BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
 {
+	i2c_result_t return_value = I2C_IS_RUNNING;
+
+	if (LL_I2C_IsActiveFlag_BUSY(p_i2c->handle) == 1)
+    {
+        Sensor_Bus_Busy_count++;
+
+        if (Sensor_Bus_Busy_count < Sensor_Bus_Busy_count_limit)
+        {
+            is_BMP390_Data_Complete = I2C_IS_RUNNING;
+            return I2C_IS_RUNNING;
+        }
+
+        Sensor_Bus_Busy_count = 0;
+
+        Sensor_Read_State = 0;
+
+        is_BMP390_Data_Complete = I2C_ERROR_BUS_BUSY;
+        return is_BMP390_Data_Complete;
+    }
+
+	Sensor_Bus_Busy_count = 0;
+
 	switch (Sensor_Read_State)
     {
 	case 0:
@@ -377,9 +437,10 @@ bool BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
 
 	case 1:
     {
-		if (Is_I2C_Read_Complete(&is_BMP390_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		Sensor_temp_buffer[0] |= 0b00010011;
@@ -390,9 +451,10 @@ bool BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
 
 	case 2:
     {
-		if (Is_I2C_Write_Complete(&is_BMP390_Write_Complete) == false)
+		return_value = Is_I2C_Write_Complete(&is_BMP390_Write_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		I2C_Mem_Read_IT(p_i2c, BMP390_ADDR, BMP390_STATUS_REG_ADDR,
@@ -404,9 +466,10 @@ bool BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
 
 	case 3:
     {
-		if (Is_I2C_Read_Complete(&is_BMP390_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		if (BMP390_is_value_ready(read_type, Sensor_temp_buffer) == false)
@@ -423,9 +486,10 @@ bool BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
 
 	case 4:
     {
-		if (Is_I2C_Read_Complete(&is_BMP390_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+		if (return_value != I2C_OK)
         {
-            return 0;
+			break;
         }
 
 		BMP390_compensate_value(read_type, &Sensor_temp_buffer[1]);
@@ -440,6 +504,14 @@ bool BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
 	default:
 		return 0;
 	}
+
+	if (return_value != I2C_IS_RUNNING)
+	{
+		Sensor_Read_State = 0;
+	}
+
+	is_BMP390_Data_Complete = return_value;
+    return return_value;
 }
 
 /* :::::::::: BMP390 Flag Check Command :::::::: */

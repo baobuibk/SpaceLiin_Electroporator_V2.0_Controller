@@ -12,6 +12,7 @@ typedef enum
 {
 	SENSOR_INIT_TYPE,
 	SENSOR_READ_TYPE,
+	SENSOR_RESET_I2C_BUS_TYPE,
 } sensor_request_type_t;
 
 typedef struct
@@ -31,7 +32,10 @@ typedef struct _sensor_request_rb_t_
     volatile    uint16_t    read_index;
 				
 	Sensor_Interface*    	pfn_sensor_function;
-				bool		is_complete;
+				 bool		is_init;
+		 i2c_result_t		is_complete;
+
+		 		char*		p_sensor_name;
 
 } sensor_request_rb_t;
 
@@ -50,10 +54,12 @@ void Sensor_Read_Init(void);
 void Sensor_Read_Task(void*);
 
 bool Sensor_Read_Value(Sensor_Read_typedef read_type);
-bool Is_Sensor_Read_Complete(sensor_request_rb_t* p_sensor_rb);
+uint8_t Is_Sensor_Read_Complete(sensor_request_rb_t* p_sensor_rb);
 
 void Sensor_I2C_IRQHandler(void);
 void Onboard_Sensor_I2C_IRQHandler(void);
+
+void Sensor_I2C_ER_IRQHandler(void);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 

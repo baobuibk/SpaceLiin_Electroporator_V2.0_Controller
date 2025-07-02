@@ -8,12 +8,6 @@
 #include "i2c.h"
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Defines ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-typedef enum _Sensor_Return_Code_typedef_
-{
-	SENSOR_OK,
-	SENSOR_ERROR_NOT_CONNECTED,
-}
-
 typedef enum _Sensor_Read_typedef_
 {
 	/* :::::::::: LSM6DSOX Read Data Type :::::::: */
@@ -37,8 +31,8 @@ typedef enum _Sensor_Read_typedef_
 
 typedef struct
 {
-    bool (*init)(i2c_stdio_typedef*);
-    bool (*read_value)(i2c_stdio_typedef*, Sensor_Read_typedef);
+    uint8_t (*init)(i2c_stdio_typedef*);
+    uint8_t (*read_value)(i2c_stdio_typedef*, Sensor_Read_typedef);
 
     bool (*is_init_complete)(void);
     bool (*is_read_complete)(void);

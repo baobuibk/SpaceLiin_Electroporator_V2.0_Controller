@@ -17,9 +17,9 @@ extern double Sensor_Altitude;
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: BMP390 Command :::::::: */
-bool BMP390_init(i2c_stdio_typedef* p_i2c);
+uint8_t BMP390_init(i2c_stdio_typedef* p_i2c);
 
-bool BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
+uint8_t BMP390_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
 
 /* :::::::::: BMP390 Flag Check Command :::::::: */
 bool Is_BMP390_Init_Complete();

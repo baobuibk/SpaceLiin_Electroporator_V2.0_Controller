@@ -24,9 +24,9 @@ extern H3LIS331DL_data_typedef H3LIS_Accel;
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: H3LIS331DL Command :::::::: */
-bool H3LIS331DL_init(i2c_stdio_typedef* p_i2c);
+uint8_t H3LIS331DL_init(i2c_stdio_typedef* p_i2c);
 
-bool H3LIS331DL_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
+uint8_t H3LIS331DL_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
 
 /* :::::::::: H3LIS331DL Flag Check Command :::::::: */
 bool Is_H3LIS331DL_Init_Complete(void);

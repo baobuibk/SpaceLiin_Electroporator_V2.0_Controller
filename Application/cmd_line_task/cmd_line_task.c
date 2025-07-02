@@ -82,7 +82,7 @@ const char SPLASH[][65] =
 };
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-static void         CMD_send_splash(uart_stdio_typedef* p_uart);
+//static void         CMD_send_splash(uart_stdio_typedef* p_uart);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 uint8_t g_RS232_CMD_line_return = CMDLINE_OK;
@@ -119,12 +119,12 @@ void CMD_Line_Task_Init()
         memset((void *)RF_CMD_line.p_buffer, 0, sizeof(RF_CMD_line.p_buffer));
     }
 
-    UART_Send_String(&RS232_UART, "GPC FIRMWARE V2.0.0\n");
-    UART_Send_String(&RS232_UART, "> ");
+    UART_Send_String(&RS232_UART, "> GPC FIRMWARE V2.0.0\n");
+    // UART_Send_String(&RS232_UART, "> ");
 
     UART_Send_String(&RF_UART, "B\n");
-    UART_Send_String(&RF_UART, "GPC FIRMWARE V2.0.0\n");
-    UART_Send_String(&RF_UART, "> ");
+    UART_Send_String(&RF_UART, "> GPC FIRMWARE V2.0.0\n");
+    // UART_Send_String(&RF_UART, "> ");
 
     CMD_line_handle = &RF_UART;
 }
@@ -491,13 +491,13 @@ void RF_IRQHandler(void)
 
 
 
-static void CMD_send_splash(uart_stdio_typedef* p_uart)
-{
-    for(uint8_t i = 0 ; i < 21 ; i++)
-    {
-		UART_Send_String(p_uart, &SPLASH[i][0]);
-	}
-	UART_Send_String(p_uart, "> ");
-}
+//static void CMD_send_splash(uart_stdio_typedef* p_uart)
+//{
+//    for(uint8_t i = 0 ; i < 21 ; i++)
+//    {
+//		UART_Send_String(p_uart, &SPLASH[i][0]);
+//	}
+//	UART_Send_String(p_uart, "> ");
+//}
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */

@@ -25,9 +25,9 @@ extern LSM6DSOX_data_typedef Sensor_Accel;
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Class ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: LSM6DSOX Command :::::::: */
-bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c);
+uint8_t LSM6DSOX_init(i2c_stdio_typedef* p_i2c);
 
-bool LSM6DSOX_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
+uint8_t LSM6DSOX_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
 
 // bool LSM6DSOX_Calib();
 

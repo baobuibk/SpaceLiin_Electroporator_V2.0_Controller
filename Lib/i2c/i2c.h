@@ -13,8 +13,12 @@
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Types ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 typedef enum
 {
+    I2C_IS_RUNNING,
 	I2C_OK,
-	I2C_ERROR_NOT_CONNECTED,
+	I2C_ERROR_SENSOR_NOT_CONNECTED,
+    I2C_ERROR_BUS_ERROR,
+    I2C_ERROR_BUS_BUSY,
+    I2C_FAIL,
 } i2c_result_t;
 
 typedef struct
@@ -25,8 +29,7 @@ typedef struct
 
 	volatile uint8_t        *p_dev_buffer;
 	volatile uint8_t        dev_buffer_size;
-	volatile bool*          p_is_complete;
-    volatile i2c_result_t*  p_return_code;
+	volatile i2c_result_t*  p_is_complete;
 } I2C_data_t;
 
 typedef struct _i2c_stdio_typedef
@@ -68,7 +71,7 @@ void I2C_Mem_Write_IT
 	uint8_t memAddress,
     uint8_t *p_data,
     uint8_t size,
-    bool* p_is_complete
+    i2c_result_t* p_is_complete
 );
 
 void I2C_Mem_Read_IT
@@ -78,12 +81,12 @@ void I2C_Mem_Read_IT
 	uint8_t memAddress,
     uint8_t *p_data,
     uint8_t size,
-    bool* p_is_complete
+    i2c_result_t* p_is_complete
 );
 
-bool Is_I2C_Write_Complete(bool* p_is_complete);
+i2c_result_t Is_I2C_Write_Complete(i2c_result_t* p_is_complete);
 
-bool Is_I2C_Read_Complete(bool* p_is_complete);
+i2c_result_t Is_I2C_Read_Complete(i2c_result_t* p_is_complete);
 
 uint8_t     I2C_is_buffer_full(volatile uint16_t *pui16Read,
                 volatile uint16_t *pui16Write, uint16_t ui16Size);
@@ -99,7 +102,7 @@ void I2C_Add_to_request_buffer
     uint8_t write_or_read,
     uint8_t *p_data,
     uint8_t size,
-    bool* p_is_complete
+    i2c_result_t* p_is_complete
 );
 
 uint16_t    I2C_get_buffer_count(volatile uint16_t *pui16Read,
@@ -111,6 +114,7 @@ void        I2C_Prime_Transmit(i2c_stdio_typedef* p_i2c);
 
 /* :::::::::: IRQ Handler ::::::::::::: */
 void I2C_EV_IRQHandler(i2c_stdio_typedef* p_i2c);
+void I2C_ER_IRQHandler(i2c_stdio_typedef* p_i2c);
 
 //*****************************************************************************
 //

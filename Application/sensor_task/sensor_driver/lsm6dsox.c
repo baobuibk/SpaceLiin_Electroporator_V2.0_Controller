@@ -64,6 +64,8 @@ static uint8_t Sensor_temp_buffer[30];
 static uint8_t Sensor_Read_State = 0;
 static uint8_t Sensor_Read_Value_State = 0;
 // static uint8_t Sensor_Init_State = 0;
+static uint8_t Sensor_Bus_Busy_count = 0;
+static uint8_t Sensor_Bus_Busy_count_limit = 100;
 
 // static uint8_t Sensor_Calib_State = 0;
 // static uint8_t Sensor_Calib_Count = 0;
@@ -72,13 +74,12 @@ static uint8_t Sensor_Read_Value_State = 0;
 static float Accel_Calib_Factor = LSM6DSOX_ACCEL_FS_2G;
 static float Gyro_Calib_Factor 	= GYRO_SENSITIVITY_500DPS;
 
-static bool is_LSM6DSOX_Init_Complete  = false;
-static bool is_LSM6DSOX_Write_Complete  = false;
-static bool is_LSM6DSOX_Read_Complete  = false;
-static bool is_LSM6DSOX_Calib_Complete = false;
+static i2c_result_t is_LSM6DSOX_Init_Complete  = I2C_IS_RUNNING;
+static i2c_result_t is_LSM6DSOX_Write_Complete = false;
+static i2c_result_t is_LSM6DSOX_Read_Complete  = false;
+static i2c_result_t is_LSM6DSOX_Calib_Complete = false;
 
-static i2c_result_t LSM6DSOX_I2C_return_code = I2C_OK;
-static bool is_LSM6DSOX_Data_Complete = false;
+static i2c_result_t is_LSM6DSOX_Data_Complete  = false;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static bool LSM6DSOX_is_value_ready
@@ -106,8 +107,30 @@ LSM6DSOX_data_typedef Sensor_Accel;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: LSM6DSOX Command :::::::: */
-bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
+uint8_t LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 {
+	i2c_result_t return_value;
+
+	if (LL_I2C_IsActiveFlag_BUSY(p_i2c->handle) == 1)
+    {
+        Sensor_Bus_Busy_count++;
+
+        if (Sensor_Bus_Busy_count < Sensor_Bus_Busy_count_limit)
+        {
+            is_LSM6DSOX_Init_Complete = I2C_IS_RUNNING;
+            return I2C_IS_RUNNING;
+        }
+
+        Sensor_Bus_Busy_count = 0;
+
+        Sensor_Read_State = 0;
+
+        is_LSM6DSOX_Init_Complete = I2C_ERROR_BUS_BUSY;
+        return is_LSM6DSOX_Init_Complete;
+    }
+
+	Sensor_Bus_Busy_count = 0;
+
 	switch (Sensor_Read_State)
     {
 
@@ -129,9 +152,10 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 
 	case 1:
     {
-        if (Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete) == false)
+        return_value = Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete);
+        if (return_value != I2C_OK)
         {
-            return 0;
+            break;
         }
         
 		//Sensor_temp_buffer[0] = 0x4C;
@@ -150,9 +174,10 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 
 	case 2:
     {
-		if (Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete) == false)
+		return_value = Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete);
+        if (return_value != I2C_OK)
         {
-            return 0;
+            break;
         }
 
 		Sensor_temp_buffer[0] = 0x00;		//0x02 for use user offset
@@ -163,9 +188,10 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 
 	case 3:
     {
-		if (Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete) == false)
+		return_value = Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete);
+        if (return_value != I2C_OK)
         {
-            return 0;
+            break;
         }
 
 		Sensor_temp_buffer[0] = 0x00;
@@ -176,9 +202,10 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 
 	case 4:
     {
-		if (Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete) == false)
+		return_value = Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete);
+        if (return_value != I2C_OK)
         {
-            return 0;
+            break;
         }
 
 		Sensor_temp_buffer[0] = 0x00;
@@ -189,9 +216,10 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 
 	case 5:
     {
-        if (Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete) == false)
+        return_value = Is_I2C_Write_Complete(&is_LSM6DSOX_Write_Complete);
+        if (return_value != I2C_OK)
         {
-            return 0;
+            break;
         }
 
 		Sensor_Read_State = 0;
@@ -202,10 +230,40 @@ bool LSM6DSOX_init(i2c_stdio_typedef* p_i2c)
 	default:
 		return 0;
 	}
+
+	if (return_value != I2C_IS_RUNNING)
+	{
+		Sensor_Read_State = 0;
+	}
+
+	is_LSM6DSOX_Init_Complete = return_value;
+    return return_value;
 }
 
-bool LSM6DSOX_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
+uint8_t LSM6DSOX_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type)
 {
+	i2c_result_t return_value;
+
+	if (LL_I2C_IsActiveFlag_BUSY(p_i2c->handle) == 1)
+    {
+        Sensor_Bus_Busy_count++;
+
+        if (Sensor_Bus_Busy_count < Sensor_Bus_Busy_count_limit)
+        {
+            is_LSM6DSOX_Data_Complete = I2C_IS_RUNNING;
+            return I2C_IS_RUNNING;
+        }
+
+        Sensor_Bus_Busy_count = 0;
+
+        Sensor_Read_State = 0;
+
+        is_LSM6DSOX_Data_Complete = I2C_ERROR_BUS_BUSY;
+        return is_LSM6DSOX_Data_Complete;
+    }
+
+	Sensor_Bus_Busy_count = 0;
+
 	switch (Sensor_Read_Value_State)
     {
 
@@ -228,9 +286,10 @@ bool LSM6DSOX_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type
 
 	case SENSOR_READ_DATA_STATE:
     {
-		if (Is_I2C_Read_Complete(&is_LSM6DSOX_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_LSM6DSOX_Read_Complete);
+        if (return_value != I2C_OK)
         {
-            return 0;
+            break;
         }
 
 		if (LSM6DSOX_is_value_ready(read_type, Sensor_temp_buffer) == false)
@@ -247,9 +306,10 @@ bool LSM6DSOX_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type
 
 	case SENSOR_PROCESS_DATA_STATE:
     {
-		if (Is_I2C_Read_Complete(&is_LSM6DSOX_Read_Complete) == false)
+		return_value = Is_I2C_Read_Complete(&is_LSM6DSOX_Read_Complete);
+        if (return_value != I2C_OK)
         {
-            return 0;
+            break;
         }
 
 		LSM6DSOX_compensate_value(read_type, &Sensor_temp_buffer[1]);
@@ -263,6 +323,14 @@ bool LSM6DSOX_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type
 	default:
 		return 0;
 	}
+
+	if (return_value != I2C_IS_RUNNING)
+	{
+		Sensor_Read_State = 0;
+	}
+
+	is_LSM6DSOX_Data_Complete = return_value;
+    return return_value;
 }
 
 /* :::::::::: LSM6DSOX Flag Check Command :::::::: */

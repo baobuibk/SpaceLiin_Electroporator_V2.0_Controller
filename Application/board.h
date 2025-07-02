@@ -66,8 +66,8 @@
 // /***********************************************/
 
 /**********************I2C**********************/
-#define SENSOR_I2C_HANDLE       I2C1
-#define SENSOR_I2C_IRQ          I2C1_EV_IRQn
+#define SENSOR_I2C_HANDLE           I2C1
+#define SENSOR_I2C_IRQ              I2C1_EV_IRQn
 
 #define ONBOARD_SENSOR_I2C_HANDLE   I2C3
 #define ONBOARD_SENSOR_I2C_IRQ      I2C3_EV_IRQn

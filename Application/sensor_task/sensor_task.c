@@ -26,6 +26,10 @@ static uint16_t     get_buffer_count(volatile uint16_t *pui16Read,
 
 static uint16_t     advance_buffer_index(volatile uint16_t* pui16Index, uint16_t ui16Size);
 
+static uint8_t 		sensor_I2C_error_handle(sensor_request_rb_t* p_current_sensor, i2c_result_t* p_return_value);
+
+static void 		reset_buffer(volatile uint16_t *pui16Read, volatile uint16_t *pui16Write);
+
 //*****************************************************************************
 //
 // Macros to determine number of free and used bytes in the receive buffer.
@@ -52,6 +56,9 @@ static uint16_t     advance_buffer_index(volatile uint16_t* pui16Index, uint16_t
 #define ADVANCE_SENSOR_REQUEST_READ_INDEX(p_sensor)   	(advance_buffer_index( &(p_sensor)->read_index, \
                                                                       				(p_sensor)->buffer_size))
 
+#define RESET_SENSOR_REQUEST_BUFFER(p_sensor)			(reset_buffer(	&(p_sensor)->read_index,   \
+                                                                  				&(p_sensor)->write_index))
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 i2c_stdio_typedef Sensor_I2C;
 #define			  SENSOR_DATA_ARRAY_SIZE 2 * 16
@@ -60,6 +67,9 @@ I2C_data_t 		  g_sensor_I2C_data_array[SENSOR_DATA_ARRAY_SIZE];
 request_buffer_t g_sensor_BMP390_request_buffer[16];
 request_buffer_t g_sensor_LSM6DSOX_request_buffer[16];
 // request_buffer_t g_sensor_H3LIS331DL_request_buffer[16];
+
+char g_sensor_BMP390_name[] 	= "BMP390";
+char g_sensor_LSM6DSOX_name[] 	= "LSM6DSOX";
 
 sensor_request_rb_t Sensor_BMP390_rb;
 sensor_request_rb_t Sensor_LSM6DSOX_rb;
@@ -70,6 +80,8 @@ i2c_stdio_typedef   Onboard_Sensor_I2C;
 I2C_data_t 		    g_onboard_sensor_I2C_data_array[ONBOARD_SENSOR_DATA_ARRAY_SIZE];
 
 request_buffer_t    g_onboard_sensor_H3LIS331DL_request_buffer[16];
+
+char g_onboard_sensor_H3LIS331DL_name[] = "ONBOARD H3LIS331DL";
 
 sensor_request_rb_t Onboard_Sensor_H3LIS331DL_rb;
 
@@ -109,6 +121,8 @@ void Sensor_Read_Init(void)
 	Sensor_BMP390_rb.buffer_size    	= 16;
 	Sensor_BMP390_rb.write_index 		= 0;
 	Sensor_BMP390_rb.read_index			= 0;
+	Sensor_BMP390_rb.is_init			= 0;
+	Sensor_BMP390_rb.p_sensor_name		= g_sensor_BMP390_name;
 
 	Sensor_BMP390_rb.pfn_sensor_function = &Sensor_BMP390;
 
@@ -123,6 +137,8 @@ void Sensor_Read_Init(void)
 	Sensor_LSM6DSOX_rb.buffer_size    	= 16;
 	Sensor_LSM6DSOX_rb.write_index 		= 0;
 	Sensor_LSM6DSOX_rb.read_index		= 0;
+	Sensor_LSM6DSOX_rb.is_init			= 0;
+	Sensor_LSM6DSOX_rb.p_sensor_name	= g_sensor_LSM6DSOX_name;
 
 	Sensor_LSM6DSOX_rb.pfn_sensor_function = &Sensor_LSM6DSOX;
 
@@ -137,6 +153,8 @@ void Sensor_Read_Init(void)
 	Onboard_Sensor_H3LIS331DL_rb.buffer_size    	= 16;
 	Onboard_Sensor_H3LIS331DL_rb.write_index 		= 0;
 	Onboard_Sensor_H3LIS331DL_rb.read_index			= 0;
+	Onboard_Sensor_H3LIS331DL_rb.is_init			= 0;
+	Onboard_Sensor_H3LIS331DL_rb.p_sensor_name		= g_onboard_sensor_H3LIS331DL_name;
 
 	Onboard_Sensor_H3LIS331DL_rb.pfn_sensor_function = &Sensor_H3LIS331DL;
 
@@ -171,7 +189,7 @@ void Sensor_Read_Task(void*)
     uint8_t sensor_Idx;
     uint8_t current_request;
     sensor_request_rb_t *p_current_sensor;
-	bool	is_complete = false;
+	uint8_t	is_complete = false;
 
     // Loop through each sensor in the list
     for (sensor_Idx = 0; sensor_Idx < NUMBER_OF_SENSOR; sensor_Idx++)
@@ -203,36 +221,21 @@ void Sensor_Read_Task(void*)
 			is_complete = p_current_sensor->pfn_sensor_function->init(p_current_sensor->p_i2c);
 		}
 
-		// If the current request has been marked as complete
-        if (is_complete == true)
-        {
-			is_complete = false;
+		if (sensor_I2C_error_handle(p_current_sensor, &is_complete) == 1)
+		{
+			return;
+		}
+		
+		// p_current_sensor->p_request_buffer[p_current_sensor->read_index].is_requested = false;
 
-            // update completion flag for that sensor
-			if (p_current_sensor->p_request_buffer[p_current_sensor->read_index].request_type == SENSOR_READ_TYPE)
-			{
-				p_current_sensor->is_complete = true;
-			}
-			else if (p_current_sensor->p_request_buffer[p_current_sensor->read_index].request_type == SENSOR_INIT_TYPE)
-			{
-				UART_Send_String(&RS232_UART, "Sensor Init success\n");
-				UART_Send_String(&RS232_UART, "> ");
+		// If there are no more requests in the buffer, skip to next sensor
+		if (IS_SENSOR_REQUEST_BUFFER_EMPTY(p_current_sensor))
+		{
+			continue;
+		}
 
-				UART_Send_String(&RF_UART, "Sensor Init success\n");
-				UART_Send_String(&RF_UART, "> ");
-			}
-
-			p_current_sensor->p_request_buffer[p_current_sensor->read_index].is_requested = false;
-
-            // If there are no more requests in the buffer, skip to next sensor
-            if (IS_SENSOR_REQUEST_BUFFER_EMPTY(p_current_sensor))
-            {
-                continue;
-            }
-
-            // Advance the buffer read index to get the next request
-            ADVANCE_SENSOR_REQUEST_READ_INDEX(p_current_sensor);
-        }
+		// Advance the buffer read index to get the next request
+		ADVANCE_SENSOR_REQUEST_READ_INDEX(p_current_sensor);
     }
 }
 
@@ -286,27 +289,31 @@ bool Sensor_Read_Value(Sensor_Read_typedef read_type)
 		return false;
 	}
 
+	if (p_sensor_rb->is_init == false)
+	{
+		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].is_requested = true;
+		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request_type = SENSOR_INIT_TYPE;
+		ADVANCE_SENSOR_REQUEST_WRITE_INDEX(p_sensor_rb);
+	}
+
 	p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].is_requested = true;
 	p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request_type = SENSOR_READ_TYPE;
-	p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request = read_type;
+	p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request 	 = read_type;
 	ADVANCE_SENSOR_REQUEST_WRITE_INDEX(p_sensor_rb);
 	return true;
 }
 
-bool Is_Sensor_Read_Complete(sensor_request_rb_t* p_sensor_rb)
+uint8_t Is_Sensor_Read_Complete(sensor_request_rb_t* p_sensor_rb)
 {
 	if (p_sensor_rb == NULL)
 	{
 		return false;
 	}
+
+	i2c_result_t return_value = p_sensor_rb->is_complete;
+	p_sensor_rb->is_complete = I2C_IS_RUNNING;
 	
-	if (p_sensor_rb->is_complete == true)
-	{
-		p_sensor_rb->is_complete = false;
-		return 1;
-	}
-	
-	return 0;
+	return return_value;
 }
 
 void Sensor_I2C_IRQHandler(void)
@@ -319,7 +326,105 @@ void Onboard_Sensor_I2C_IRQHandler(void)
 	I2C_EV_IRQHandler(&Onboard_Sensor_I2C);
 }
 
+void Sensor_I2C_ER_IRQHandler(void)
+{
+	I2C_ER_IRQHandler(&Sensor_I2C);
+}
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+static uint8_t sensor_I2C_error_handle(sensor_request_rb_t* p_current_sensor, i2c_result_t* p_return_value)
+{
+	if (p_return_value == NULL)
+	{
+		return 1;
+	}
+
+	p_current_sensor->is_complete  = *p_return_value;
+	i2c_result_t return_value_temp = *p_return_value;
+	*p_return_value = false;
+	
+	// If the current request has been marked as complete
+	// update completion flag for that sensor
+	if (return_value_temp == I2C_OK)
+	{
+		 if (p_current_sensor->p_request_buffer[p_current_sensor->read_index].request_type == SENSOR_INIT_TYPE)
+		 {
+		 	p_current_sensor->is_init = true;
+
+		 	// UART_Printf(CMD_line_handle, "> SENSOR %s INIT SUCCESSFULLY\n", p_current_sensor->p_sensor_name);
+		 }
+
+		p_current_sensor->p_request_buffer[p_current_sensor->read_index].is_requested = false;
+
+		return 0;
+	}
+	else if (return_value_temp == I2C_IS_RUNNING)
+	{
+		return 1;
+	}
+
+	// if (return_value_temp == I2C_ERROR)
+	p_current_sensor->is_init = false;
+
+	p_current_sensor->p_request_buffer[p_current_sensor->read_index].is_requested = false;
+	
+	// if (p_current_sensor->p_request_buffer[p_current_sensor->read_index].request_type == SENSOR_INIT_TYPE)
+	// {
+	// 	UART_Printf(CMD_line_handle, "> ERROR: SENSOR %s FAIL TO INIT\n", p_current_sensor->p_sensor_name);
+	// }
+
+	switch (return_value_temp)
+	{
+
+	case I2C_ERROR_SENSOR_NOT_CONNECTED:
+	{
+		RESET_SENSOR_REQUEST_BUFFER(p_current_sensor);
+
+		p_current_sensor->p_request_buffer[p_current_sensor->read_index].is_requested = false;
+
+		UART_Printf(CMD_line_handle, "> ERROR: SENSOR %s IS NOT RESPONDING ON I2C BUS (NO ACK)\n", p_current_sensor->p_sensor_name);
+
+		return 0;
+	}
+
+	case I2C_ERROR_BUS_ERROR:
+	{
+		RESET_SENSOR_REQUEST_BUFFER(p_current_sensor);
+
+		p_current_sensor->p_request_buffer[p_current_sensor->read_index].is_requested = false;
+
+		UART_Printf(CMD_line_handle, "> ERROR: SENSOR %s I2C BUS ERROR (SIGNAL ERROR OR MISWIRED)\n", p_current_sensor->p_sensor_name);
+
+		return 0;
+	}
+
+	case I2C_ERROR_BUS_BUSY:
+	{
+		RESET_SENSOR_REQUEST_BUFFER(p_current_sensor);
+
+		p_current_sensor->p_request_buffer[p_current_sensor->read_index].is_requested = false;
+
+		UART_Printf(CMD_line_handle, "> ERROR: SENSOR %s I2C BUS CURRENTLY BUSY (SIGNAL ERROR OR MISWIRED)\n", p_current_sensor->p_sensor_name);
+
+		return 0;
+	}
+
+	case I2C_FAIL:
+	{
+		RESET_SENSOR_REQUEST_BUFFER(p_current_sensor);
+
+		UART_Printf(CMD_line_handle, "> ERROR: INTERNAL ERROR, PLEASE RESET\n", p_current_sensor->p_sensor_name);
+
+		return 0;
+	}
+	
+	default:
+		break;
+	}
+
+	return 1;
+}
+
 //*****************************************************************************
 //
 //! Determines whether the ring buffer whose pointers and size are provided
@@ -431,6 +536,29 @@ static uint16_t advance_buffer_index(volatile uint16_t* pui16Index, uint16_t ui1
     *pui16Index = (*pui16Index + 1) % ui16Size;
 
     return(*pui16Index);
+}
+
+//*****************************************************************************
+//
+//! Resets the buffer by aligning the read index to the write index.
+//!
+//! \param pui16Read points to the read index of the buffer.
+//! \param pui16Write points to the write index of the buffer.
+//!
+//! This function sets the read index equal to the write index,
+//! effectively marking the buffer as empty without modifying the
+//! underlying data.
+//!
+//! \return None.
+//
+//*****************************************************************************
+static void reset_buffer(volatile uint16_t *pui16Read,
+              volatile uint16_t *pui16Write)
+{
+    uint16_t ui16Write;
+
+    ui16Write  = *pui16Write;
+    *pui16Read = ui16Write;
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
