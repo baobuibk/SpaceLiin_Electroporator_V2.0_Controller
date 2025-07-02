@@ -274,6 +274,8 @@ static void MX_I2C1_Init(void)
   /* I2C1 interrupt Init */
   NVIC_SetPriority(I2C1_EV_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),4, 0));
   NVIC_EnableIRQ(I2C1_EV_IRQn);
+  NVIC_SetPriority(I2C1_ER_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),4, 0));
+  NVIC_EnableIRQ(I2C1_ER_IRQn);
 
   /* USER CODE BEGIN I2C1_Init 1 */
 

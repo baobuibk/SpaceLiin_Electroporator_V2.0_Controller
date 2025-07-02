@@ -41,6 +41,7 @@ void I2C_Init(  i2c_stdio_typedef* p_i2c, I2C_TypeDef* _handle,
     LL_I2C_Enable(p_i2c->handle);
 
 	LL_I2C_DisableIT_EVT(p_i2c->handle);
+	LL_I2C_DisableIT_ERR(p_i2c->handle);
 	LL_I2C_DisableIT_TX(p_i2c->handle);
     LL_I2C_DisableIT_RX(p_i2c->handle);
 }
@@ -48,20 +49,22 @@ void I2C_Init(  i2c_stdio_typedef* p_i2c, I2C_TypeDef* _handle,
 /* :::::::::: I2C Command :::::::: */
 void I2C_Mem_Write_IT(
 						i2c_stdio_typedef* p_i2c, uint8_t devAddress,
-						uint8_t memAddress, uint8_t *p_data, uint8_t size, bool* p_is_complete)
+						uint8_t memAddress, uint8_t *p_data, uint8_t size, i2c_result_t* p_is_complete)
 {
 	I2C_Add_to_request_buffer(p_i2c, devAddress, memAddress, 0, p_data, size, p_is_complete);
 }
 
 void I2C_Mem_Read_IT(
 						i2c_stdio_typedef* p_i2c, uint8_t devAddress,
-						uint8_t memAddress, uint8_t *p_data, uint8_t size, bool* p_is_complete)
+						uint8_t memAddress, uint8_t *p_data, uint8_t size, i2c_result_t* p_is_complete)
 {
 	I2C_Add_to_request_buffer(p_i2c, devAddress, memAddress, 1, p_data, size, p_is_complete);
 }
 
-void I2C_Add_to_request_buffer(i2c_stdio_typedef* p_i2c, uint8_t devAddress,
-		uint8_t memAddress, uint8_t write_or_read, uint8_t *p_data, uint8_t size, bool* p_is_complete)
+void I2C_Add_to_request_buffer( i2c_stdio_typedef* p_i2c, uint8_t devAddress,
+								uint8_t memAddress, uint8_t write_or_read, 
+								uint8_t *p_data, uint8_t size, 
+								i2c_result_t* p_is_complete)
 {
 	if (I2C_REQUEST_BUFFER_FULL(p_i2c))
     {
@@ -86,36 +89,30 @@ void I2C_Add_to_request_buffer(i2c_stdio_typedef* p_i2c, uint8_t devAddress,
     }
 }
 
-bool Is_I2C_Write_Complete(bool* p_is_complete)
+i2c_result_t Is_I2C_Write_Complete(i2c_result_t* p_is_complete)
 {
 	if (p_is_complete == NULL)
 	{
-		return 0;
+		return I2C_FAIL;
 	}
+
+	i2c_result_t return_value = *p_is_complete;
+	*p_is_complete = I2C_IS_RUNNING;
 	
-	if (*p_is_complete == true)
-	{
-		*p_is_complete = false;
-		return 1;
-	}
-	
-	return 0;
+	return return_value;
 }
 
-bool Is_I2C_Read_Complete(bool* p_is_complete)
+i2c_result_t Is_I2C_Read_Complete(i2c_result_t* p_is_complete)
 {
 	if (p_is_complete == NULL)
 	{
 		return 0;
 	}
+
+	i2c_result_t return_value = *p_is_complete;
+	*p_is_complete = I2C_IS_RUNNING;
 	
-	if (*p_is_complete == true)
-	{
-		*p_is_complete = false;
-		return 1;
-	}
-	
-	return 0;
+	return return_value;
 }
 
 //*****************************************************************************
@@ -239,6 +236,7 @@ void I2C_Prime_Transmit(i2c_stdio_typedef* p_i2c)
 	p_i2c->is_disable = false;
 
 	LL_I2C_EnableIT_EVT(p_i2c->handle);
+	LL_I2C_EnableIT_ERR(p_i2c->handle);
 
 	if (p_i2c->p_request_buffer[p_i2c->read_index].write_or_read == 0)
 	{
@@ -253,6 +251,48 @@ void I2C_Prime_Transmit(i2c_stdio_typedef* p_i2c)
 	LL_I2C_GenerateStartCondition(p_i2c->handle);
 
     NVIC_EnableIRQ(p_i2c->irqn);
+}
+
+void I2C_ER_IRQHandler(i2c_stdio_typedef* p_i2c)
+{
+	// Check for Acknowledge Failure (AF) error
+    if (LL_I2C_IsActiveFlag_AF(p_i2c->handle) == 1)
+    {
+        LL_I2C_ClearFlag_AF(p_i2c->handle);
+        *p_i2c->p_request_buffer[p_i2c->read_index].p_is_complete = I2C_ERROR_SENSOR_NOT_CONNECTED;
+    }
+	else if (LL_I2C_IsActiveFlag_BERR(p_i2c->handle) == 1)
+	{
+		LL_I2C_ClearFlag_BERR(p_i2c->handle);
+        *p_i2c->p_request_buffer[p_i2c->read_index].p_is_complete = I2C_ERROR_BUS_ERROR;
+	}
+	
+	p_i2c->irqn_stage = 0;
+	LL_I2C_GenerateStopCondition(p_i2c->handle);
+
+	if (p_i2c->p_request_buffer[p_i2c->read_index].write_or_read == 0)
+	{
+		LL_I2C_DisableIT_TX(p_i2c->handle);
+	}
+	else
+	{
+		LL_I2C_DisableIT_RX(p_i2c->handle);
+	}
+
+	LL_I2C_DisableIT_EVT(p_i2c->handle);
+	LL_I2C_DisableIT_ERR(p_i2c->handle);
+
+	I2C_ADVANCE_REQUEST_READ_INDEX(p_i2c);
+
+	if (I2C_REQUEST_BUFFER_EMPTY(p_i2c))
+	{
+		p_i2c->is_disable = true;
+		return;
+	}
+
+	I2C_Prime_Transmit(p_i2c);
+
+	return;
 }
 
 void I2C_EV_IRQHandler(i2c_stdio_typedef* p_i2c)
@@ -316,6 +356,7 @@ void I2C_EV_IRQHandler(i2c_stdio_typedef* p_i2c)
 			LL_I2C_GenerateStopCondition(p_i2c->handle);
 			LL_I2C_DisableIT_TX(p_i2c->handle);
 			LL_I2C_DisableIT_EVT(p_i2c->handle);
+			LL_I2C_DisableIT_ERR(p_i2c->handle);
 
 			I2C_ADVANCE_REQUEST_READ_INDEX(p_i2c);
 
@@ -410,6 +451,7 @@ void I2C_EV_IRQHandler(i2c_stdio_typedef* p_i2c)
 		LL_I2C_GenerateStopCondition(p_i2c->handle);
 		LL_I2C_DisableIT_RX(p_i2c->handle);
 		LL_I2C_DisableIT_EVT(p_i2c->handle);
+		LL_I2C_DisableIT_ERR(p_i2c->handle);
 
 		I2C_ADVANCE_REQUEST_READ_INDEX(p_i2c);
 

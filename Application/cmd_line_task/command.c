@@ -1555,7 +1555,6 @@ int CMD_GET_OVC_FLAG(int argc, char *argv[])
 /* :::::::::: I2C Sensor Command :::::::: */
 int CMD_GET_SENSOR_GYRO(int argc, char *argv[])
 {
-{
 switch (CMD_process_state)
 {
 case 0:
@@ -1573,9 +1572,16 @@ case 0:
 
 case 1:
 {
-	if (Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb) == false)
+	i2c_result_t return_value = Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb);
+	
+	if (return_value == I2C_IS_RUNNING)
 	{
 		return CMDLINE_IS_PROCESSING;
+	}
+	else if (return_value != I2C_OK)
+	{
+		CMD_process_state = 0;
+		return CMDLINE_OK;
 	}
 	
 	UART_Printf(CMD_line_handle, "> GYRO x: %dmpds; GYRO y: %dmpds; GYRO z: %dmpds\n", Sensor_Gyro.x, Sensor_Gyro.y, Sensor_Gyro.z);
@@ -1587,7 +1593,6 @@ default:
 	break;
 }
 return CMDLINE_BAD_CMD;
-}
 }
 
 int CMD_GET_SENSOR_ACCEL(int argc, char *argv[])
@@ -1609,9 +1614,16 @@ case 0:
 
 case 1:
 {
-	if (Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb) == false)
+	i2c_result_t return_value = Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb);
+	
+	if (return_value == I2C_IS_RUNNING)
 	{
 		return CMDLINE_IS_PROCESSING;
+	}
+	else if (return_value != I2C_OK)
+	{
+		CMD_process_state = 0;
+		return CMDLINE_OK;
 	}
 	
 	UART_Printf(CMD_line_handle, "> ACCEL x: %dmg; ACCEL y: %dmg; ACCEL z: %dmg\n", Sensor_Accel.x, Sensor_Accel.y, Sensor_Accel.z);
@@ -1644,9 +1656,16 @@ case 0:
 
 case 1:
 {
-	if (Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb) == false)
+	i2c_result_t return_value = Is_Sensor_Read_Complete(&Sensor_LSM6DSOX_rb);
+
+	if (return_value == I2C_IS_RUNNING)
 	{
 		return CMDLINE_IS_PROCESSING;
+	}
+	else if (return_value != I2C_OK)
+	{
+		CMD_process_state = 0;
+		return CMDLINE_OK;
 	}
 	
 	UART_Printf(CMD_line_handle, "> GYRO x: %dmpds; GYRO y: %dmpds; GYRO z: %dmpds\n", Sensor_Gyro.x, Sensor_Gyro.y, Sensor_Gyro.z);
@@ -1681,9 +1700,16 @@ case 0:
 
 case 1:
 {
-	if (Is_Sensor_Read_Complete(&Sensor_BMP390_rb) == false)
+	i2c_result_t return_value = Is_Sensor_Read_Complete(&Sensor_BMP390_rb);
+	
+	if (return_value == I2C_IS_RUNNING)
 	{
 		return CMDLINE_IS_PROCESSING;
+	}
+	else if (return_value != I2C_OK)
+	{
+		CMD_process_state = 0;
+		return CMDLINE_OK;
 	}
 	
 	char fractional_string[16] = {0};
@@ -1721,9 +1747,16 @@ case 0:
 
 case 1:
 {
-	if (Is_Sensor_Read_Complete(&Sensor_BMP390_rb) == false)
+	i2c_result_t return_value = Is_Sensor_Read_Complete(&Sensor_BMP390_rb);
+
+	if (return_value == I2C_IS_RUNNING)
 	{
 		return CMDLINE_IS_PROCESSING;
+	}
+	else if (return_value != I2C_OK)
+	{
+		CMD_process_state = 0;
+		return CMDLINE_OK;
 	}
 
 	char fractional_string[16] = {0};
@@ -1801,9 +1834,16 @@ case 0:
 
 case 1:
 {
-	if (Is_Sensor_Read_Complete(&Sensor_BMP390_rb) == false)
+	i2c_result_t return_value = Is_Sensor_Read_Complete(&Sensor_BMP390_rb);
+		
+	if (return_value == I2C_IS_RUNNING)
 	{
 		return CMDLINE_IS_PROCESSING;
+	}
+	else if (return_value != I2C_OK)
+	{
+		CMD_process_state = 0;
+		return CMDLINE_OK;
 	}
 
 	char fractional_string[16] = {0};
@@ -1829,11 +1869,6 @@ return CMDLINE_BAD_CMD;
 
 int CMD_GET_SENSOR_H3LIS(int argc, char *argv[])
 {
-	if (argc < 1)
-		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 1)
-		return CMDLINE_TOO_MANY_ARGS;
-
 	switch (CMD_process_state)
 	{
 	case 0:
@@ -1850,9 +1885,16 @@ int CMD_GET_SENSOR_H3LIS(int argc, char *argv[])
 
 	case 1:
 	{
-		if (Is_Sensor_Read_Complete(&Onboard_Sensor_H3LIS331DL_rb) == false)
+		i2c_result_t return_value = Is_Sensor_Read_Complete(&Onboard_Sensor_H3LIS331DL_rb);
+
+		if (return_value == I2C_IS_RUNNING)
 		{
 			return CMDLINE_IS_PROCESSING;
+		}
+		else if (return_value != I2C_OK)
+		{
+			CMD_process_state = 0;
+			return CMDLINE_OK;
 		}
 
 		UART_Printf(CMD_line_handle, "> ACCEL x: %dmg; ACCEL y: %dmg; ACCEL z: %dmg\n", H3LIS_Accel.x, H3LIS_Accel.y, H3LIS_Accel.z);

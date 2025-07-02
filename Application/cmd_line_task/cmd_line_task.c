@@ -119,12 +119,12 @@ void CMD_Line_Task_Init()
         memset((void *)RF_CMD_line.p_buffer, 0, sizeof(RF_CMD_line.p_buffer));
     }
 
-    UART_Send_String(&RS232_UART, "GPC FIRMWARE V2.0.0\n");
-    UART_Send_String(&RS232_UART, "> ");
+    UART_Send_String(&RS232_UART, "> GPC FIRMWARE V2.0.0\n");
+    // UART_Send_String(&RS232_UART, "> ");
 
     UART_Send_String(&RF_UART, "B\n");
-    UART_Send_String(&RF_UART, "GPC FIRMWARE V2.0.0\n");
-    UART_Send_String(&RF_UART, "> ");
+    UART_Send_String(&RF_UART, "> GPC FIRMWARE V2.0.0\n");
+    // UART_Send_String(&RF_UART, "> ");
 
     CMD_line_handle = &RF_UART;
 }
