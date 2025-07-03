@@ -671,9 +671,9 @@ int CMD_SET_PULSE_HV_POS(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 20) || (receive_argm[0] < 5))
+	if ((receive_argm[0] > 20) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 20) || (receive_argm[1] < 5))
+	else if ((receive_argm[1] > 20) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 4)) == false)
@@ -708,9 +708,9 @@ int CMD_SET_PULSE_HV_NEG(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 20) || (receive_argm[0] < 5))
+	if ((receive_argm[0] > 20) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 20) || (receive_argm[1] < 5))
+	else if ((receive_argm[1] > 20) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 4)) == false)
@@ -745,9 +745,9 @@ int CMD_SET_PULSE_LV_POS(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 90) || (receive_argm[0] < 5))
+	if ((receive_argm[0] > 90) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 90) || (receive_argm[1] < 5))
+	else if ((receive_argm[1] > 90) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
@@ -785,9 +785,9 @@ int CMD_SET_PULSE_LV_NEG(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 90) || (receive_argm[0] < 5))
+	if ((receive_argm[0] > 90) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 90) || (receive_argm[1] < 5))
+	else if ((receive_argm[1] > 90) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
