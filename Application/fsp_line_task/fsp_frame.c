@@ -104,12 +104,36 @@ void FSP_Line_Process() {
 		{
 			break;
 		}
+
+		OVC_flag_signal = true;
 		
 		// if (true)
 		Cap_Set_Discharge_All(true, true, true, true);
 
 		UART_Send_String(&RF_UART, "OVER CURRENT DETECTED\n> ");
 		UART_Send_String(&RS232_UART, "OVER CURRENT DETECTED\n> ");
+
+		UART_Printf(&RF_UART, "OUTPUT CURRENT LIMIT SET AT: %d,%dA\n> ", current_limit_A, current_limit_mA);
+		UART_Printf(&RS232_UART, "OUTPUT CURRENT LIMIT SET AT: %d,%dA\n> ", current_limit_A, current_limit_mA);
+
+		UART_Send_String(&RF_UART, "RELEASING HV AND LV CAP\n> ");
+		UART_Send_String(&RS232_UART, "RELEASING HV AND LV CAP\n> ");
+
+		break;
+	}
+
+	case FSP_CMD_GET_OVC_FLAG:
+	{
+		OVC_flag_signal = ps_FSP_RX->Payload.get_ovc_flag.OVC_flag_status;
+
+		if (OVC_flag_signal == true)
+		{
+			UART_Send_String(CMD_line_handle, "OVC FLAG STATUS IS TRUE\n> ");
+		}
+		else
+		{
+			UART_Send_String(CMD_line_handle, "OVC FLAG STATUS IS FALSE\n> ");
+		}
 
 		break;
 	}

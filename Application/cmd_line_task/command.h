@@ -60,6 +60,10 @@ extern uint8_t CMD_sequence_index;
 extern uint8_t CMD_total_sequence_index;
 
 extern bool is_streaming_enable;
+extern bool OVC_flag_signal;
+
+extern uint8_t current_limit_A;
+extern uint8_t current_limit_mA;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: Cap Control Command :::::::: */

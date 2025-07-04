@@ -40,6 +40,8 @@ typedef enum _FSP_CMD_typedef_
 	FSP_CMD_SET_CURRENT_LIMIT,
 	FSP_CMD_OVER_CURRENT_DETECT,
 
+	FSP_CMD_GET_OVC_FLAG,
+
 	/* :::::::::: I2C Sensor Command :::::::: */
 	FSP_CMD_GET_SENSOR_GYRO,
 	FSP_CMD_GET_SENSOR_ACCEL,
@@ -212,6 +214,12 @@ typedef struct _OVER_CURRENT_DETECT_FRAME_
 
 } OVER_CURRENT_DETECT_FRAME;
 
+typedef struct _GET_OVC_FLAG_FRAME_
+{
+	uint8_t		OVC_flag_status;
+
+} GET_OVC_FLAG_FRAME;
+
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ I2C Sensor Command ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 typedef struct _GET_SENSOR_GYRO_
@@ -316,6 +324,8 @@ typedef union _FSP_Payload_Frame_typedef_
 
 	SET_CURRENT_LIMIT_FRAME					set_current_limit;
 	OVER_CURRENT_DETECT_FRAME				ovc_current_detect;
+
+	GET_OVC_FLAG_FRAME						get_ovc_flag;
 
 	/* :::::::::: I2C Sensor Command :::::::: */
 	GET_SENSOR_GYRO							get_sensor_gyro;
