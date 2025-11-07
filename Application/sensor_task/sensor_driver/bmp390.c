@@ -149,7 +149,7 @@ static void BMP390_compensate_value
 
 static void BMP390_compensate_temp(double uncomp_temp);
 static void BMP390_compensate_pressure(double uncomp_pressure);
-static void BMP390_compensate_altitude(void);
+// static void BMP390_compensate_altitude(void);
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 double Sensor_Temp = 0.0;
@@ -365,27 +365,32 @@ uint8_t BMP390_init(i2c_stdio_typedef* p_i2c)
 			break;
         }
 
-		BMP390_read_uncompensated_value(p_i2c, SENSOR_READ_BMP390, &Sensor_temp_buffer[1]);
-		Sensor_Read_State = 8;
-		return 0;
-	}
-
-	case 8:
-    {
-		return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
-		if (return_value != I2C_OK)
-        {
-			break;
-        }
-
-		BMP390_compensate_value(SENSOR_READ_BMP390, &Sensor_temp_buffer[1]);
-
-		//is_sensor_read_enable = false;
 		Sensor_Read_State = 0;
 
         is_BMP390_Init_Complete = true;
 		return 1;
+
+		// BMP390_read_uncompensated_value(p_i2c, SENSOR_READ_BMP390, &Sensor_temp_buffer[1]);
+		// Sensor_Read_State = 8;
+		// return 0;
 	}
+
+	// case 8:
+    // {
+	// 	return_value = Is_I2C_Read_Complete(&is_BMP390_Read_Complete);
+	// 	if (return_value != I2C_OK)
+    //     {
+	// 		break;
+    //     }
+
+	// 	BMP390_compensate_value(SENSOR_READ_BMP390, &Sensor_temp_buffer[1]);
+
+	// 	//is_sensor_read_enable = false;
+	// 	Sensor_Read_State = 0;
+
+    //     is_BMP390_Init_Complete = true;
+	// 	return 1;
+	// }
 
 	default:
 		return 0;
@@ -604,23 +609,23 @@ static void BMP390_compensate_value(Sensor_Read_typedef read_type, uint8_t *p_BM
 		break;
 
 	case SENSOR_READ_PRESSURE:
-		BMP390_compensate_pressure(
-				(p_BMP390_RX_buffer[2] << 16) | (p_BMP390_RX_buffer[1] << 8)
-						| p_BMP390_RX_buffer[0]);
 		BMP390_compensate_temp(
 				(p_BMP390_RX_buffer[5] << 16) | (p_BMP390_RX_buffer[4] << 8)
 						| p_BMP390_RX_buffer[3]);
+		BMP390_compensate_pressure(
+				(p_BMP390_RX_buffer[2] << 16) | (p_BMP390_RX_buffer[1] << 8)
+						| p_BMP390_RX_buffer[0]);
 		break;
 
 	case SENSOR_READ_ALTITUDE:
 	case SENSOR_READ_BMP390:
-		BMP390_compensate_pressure(
-				(p_BMP390_RX_buffer[2] << 16) | (p_BMP390_RX_buffer[1] << 8)
-						| p_BMP390_RX_buffer[0]);
 		BMP390_compensate_temp(
 				(p_BMP390_RX_buffer[5] << 16) | (p_BMP390_RX_buffer[4] << 8)
 						| p_BMP390_RX_buffer[3]);
-		BMP390_compensate_altitude();
+		BMP390_compensate_pressure(
+				(p_BMP390_RX_buffer[2] << 16) | (p_BMP390_RX_buffer[1] << 8)
+						| p_BMP390_RX_buffer[0]);
+		// BMP390_compensate_altitude();
 		break;
 
 	default:
@@ -669,10 +674,10 @@ static void BMP390_compensate_pressure(double uncomp_pressure)
 	Sensor_Pressure = PAR_OUT1 + PAR_OUT2 + PAR_OUT3;
 }
 
-static void BMP390_compensate_altitude(void)
-{
-	float atmospheric = Sensor_Pressure / 100.0F;
- 	Sensor_Altitude =  44330.0 * (1.0 - pow(atmospheric / SEALEVEL_PRESSURE_HPA, 0.1903));
-}
+// static void BMP390_compensate_altitude(void)
+// {
+// 	float atmospheric = Sensor_Pressure / 100.0F;
+//  	Sensor_Altitude =  44330.0 * (1.0 - pow(atmospheric / SEALEVEL_PRESSURE_HPA, 0.1903));
+// }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ End of the program ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
