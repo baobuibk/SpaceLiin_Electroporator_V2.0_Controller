@@ -28,7 +28,8 @@ typedef enum
 {
     CAP_SOFT_START_STATE,
     CAP_CONTROL_CHARGE_STATE,
-    CAP_FREE_CHARGE_STATE,
+    CAP_SET_FREE_CHARGE_STATE,
+    CAP_IS_FREE_CHARGE_STATE,
 } Cap_Charge_State_t;
 
 typedef struct

@@ -320,7 +320,7 @@ void Cap_Controller_Charge_Task(void*)
     {
         if (s_Cap_300V.ADC_Value >= (s_Cap_300V.set_charge_voltage_ADC * 0.99))
         {
-            if (g_Cap_300V.charge_state == CAP_FREE_CHARGE_STATE)
+            if (g_Cap_300V.charge_state == CAP_SET_FREE_CHARGE_STATE)
             {
                 if (s_Cap_300V.is_notified_enable == true)
                 {
@@ -340,7 +340,7 @@ void Cap_Controller_Charge_Task(void*)
     {
         if (s_Cap_50V.ADC_Value >= (s_Cap_50V.set_charge_voltage_ADC * 0.99))
         {
-            if (g_Cap_50V.charge_state == CAP_FREE_CHARGE_STATE)
+            if (g_Cap_50V.charge_state == CAP_SET_FREE_CHARGE_STATE)
             {
                 if (s_Cap_50V.is_notified_enable == true)
                 {
@@ -824,14 +824,14 @@ static void Cap_Controller_Charge_Monitor_300V(void)
             PID_SetOutputLimits(&s_Cap_300V.charge_PID, 0, g_Cap_300V.p_range[g_Cap_300V.range_index].Duty_Max);
             Cap_Set_Volt_Internal(&g_Cap_300V, g_Cap_300V.set_charge_voltage_USER);
             g_Cap_300V.cap_state = CAP_IS_CHARGING;
-            g_Cap_300V.charge_state = CAP_FREE_CHARGE_STATE;
+            g_Cap_300V.charge_state = CAP_SET_FREE_CHARGE_STATE;
             break;
         }
 
         g_Cap_300V.range_index++;
         break;
     }
-    case CAP_FREE_CHARGE_STATE:
+    case CAP_SET_FREE_CHARGE_STATE:
     {   
         if (g_Cap_300V.cap_state != CAP_IS_FINISH_CHARGING)
         {
@@ -952,21 +952,30 @@ static void Cap_Controller_Charge_Monitor_50V(void)
             PID_SetOutputLimits(&s_Cap_50V.charge_PID, 0, g_Cap_50V.p_range[g_Cap_50V.range_index].Duty_Max);
             Cap_Set_Volt_Internal(&g_Cap_50V, g_Cap_50V.set_charge_voltage_USER);
             g_Cap_50V.cap_state = CAP_IS_CHARGING;
-            g_Cap_50V.charge_state = CAP_FREE_CHARGE_STATE;
+            g_Cap_50V.charge_state = CAP_SET_FREE_CHARGE_STATE;
             break;
         }
 
         g_Cap_50V.range_index++;
         break;
     }
-    case CAP_FREE_CHARGE_STATE:
+    case CAP_SET_FREE_CHARGE_STATE:
     {   
         if (g_Cap_50V.cap_state != CAP_IS_FINISH_CHARGING)
         {
             break;
         }
 
-        PID_SetOutputLimits(&s_Cap_50V.charge_PID, 0, 30);
+        float set_duty_temp = ((float)g_Cap_50V.set_charge_voltage_USER * 100.0) / (120.0 + (float)g_Cap_50V.set_charge_voltage_USER);
+        uint16_t cap_50V_set_duty    = (set_duty_temp * 1.112641084) + 0.5;
+
+        PID_SetOutputLimits(&s_Cap_50V.charge_PID, 0, cap_50V_set_duty);
+        g_Cap_50V.charge_state = CAP_IS_FREE_CHARGE_STATE;
+        break;
+    }
+
+    case CAP_IS_FREE_CHARGE_STATE:
+    {
         break;
     }
 
