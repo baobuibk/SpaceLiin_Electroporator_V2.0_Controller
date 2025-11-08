@@ -150,11 +150,17 @@ void Accel_Pulsing_Task(void*)
 			return;
 		}
 
-		Sensor_Read_Value(ACCEL_SENSOR);
+		// Sensor_Read_Value(ACCEL_SENSOR);
 
-		auto_pulsing_state = SEND_RESQUEST_SENSOR;
+		// auto_pulsing_state = SEND_RESQUEST_SENSOR;
 
 		get_sensor_timeout = AUTO_PULSE_TIMEOUT;
+
+		UART_Send_String(CMD_line_handle, "\e[?25h");
+
+		SchedulerTaskDisable(ACCEL_PULSING_TASK);
+		auto_pulsing_state = DISABLE_AUTO_PULSING;
+
 		break;
 	}
 
@@ -201,13 +207,13 @@ static void fsp_print(uint8_t packet_length)
 {
 	s_FSP_TX_Packet.sod 	= FSP_PKT_SOD;
 	s_FSP_TX_Packet.src_adr = fsp_my_adr;
-	s_FSP_TX_Packet.dst_adr = FSP_ADR_GPC;
+	s_FSP_TX_Packet.dst_adr = FSP_ADR_GPP;
 	s_FSP_TX_Packet.length 	= packet_length;
 	s_FSP_TX_Packet.type 	= FSP_PKT_TYPE_CMD_W_DATA;
 	s_FSP_TX_Packet.eof 	= FSP_PKT_EOF;
 	s_FSP_TX_Packet.crc16 	= crc16_CCITT(FSP_CRC16_INITIAL_VALUE, &s_FSP_TX_Packet.src_adr, s_FSP_TX_Packet.length + 4);
 
-	uint8_t encoded_frame[100] = { 0 };
+	uint8_t encoded_frame[25] = { 0 };
 	uint8_t frame_len;
 	fsp_encode(&s_FSP_TX_Packet, encoded_frame, &frame_len);
 
