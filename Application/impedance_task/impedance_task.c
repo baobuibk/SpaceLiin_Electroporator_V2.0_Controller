@@ -153,7 +153,9 @@ void Impedance_Task(void*)
 
 		UART_Printf(CMD_line_handle, "> IMPEDANCE IS %d Ohm\n", Impedance);
 
-		UART_Send_String(CMD_line_handle, "> ");
+		UART_Send_String(CMD_line_handle, "> CAP IS DISCHARGING\n> ");
+
+	    Cap_Set_Discharge_All(true, true, true, true);
 
         voltage_range_count = 0;
         impedance_range_count = 0;

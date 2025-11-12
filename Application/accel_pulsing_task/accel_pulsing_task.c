@@ -155,8 +155,10 @@ void Accel_Pulsing_Task(void*)
 		// auto_pulsing_state = SEND_RESQUEST_SENSOR;
 
 		get_sensor_timeout = AUTO_PULSE_TIMEOUT;
+		is_streaming_enable = false;
 
-		UART_Send_String(CMD_line_handle, "\e[?25h");
+		UART_Send_String(CMD_line_handle, "\e[?25h\n");
+		UART_Send_String(CMD_line_handle, "> SYSTEM IS TRIGGERED\n", ACCEL_DATA.x, ACCEL_DATA.y, ACCEL_DATA.z, frame_count);
 
 		SchedulerTaskDisable(ACCEL_PULSING_TASK);
 		auto_pulsing_state = DISABLE_AUTO_PULSING;

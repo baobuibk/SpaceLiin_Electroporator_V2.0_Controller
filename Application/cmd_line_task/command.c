@@ -320,7 +320,7 @@ int CMD_GET_CAP_ALL(int argc, char *argv[])
 	
 	uint16_t hv_cap_set_voltage, lv_cap_set_voltage;
 	hv_cap_set_voltage = Cap_Get_Set_Volt(&g_Cap_300V);
-	lv_cap_set_voltage = Cap_Get_Set_Volt(&g_Cap_300V);
+	lv_cap_set_voltage = Cap_Get_Set_Volt(&g_Cap_50V);
 
 	UART_Printf(CMD_line_handle, "> HV CAP IS SET AT: %dV, LV CAP IS SET AT: %dV\n", hv_cap_set_voltage, lv_cap_set_voltage);
 
@@ -1212,7 +1212,7 @@ int CMD_GET_THRESHOLD_ACCEL(int argc, char *argv[])
 		return CMDLINE_TOO_MANY_ARGS;
 
 	// In giá trị ra
-	UART_Printf(CMD_line_handle, "Threshold Accel is: %d %d %d\n", Threshold_Accel.x, Threshold_Accel.y, Threshold_Accel.z);
+	UART_Printf(CMD_line_handle, "> Threshold Accel is: %d %d %d\n", Threshold_Accel.x, Threshold_Accel.y, Threshold_Accel.z);
 
 	return CMDLINE_OK;
 }

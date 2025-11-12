@@ -180,7 +180,7 @@ void RS232_CMD_Line_Task(void*)
             }
             else
             {
-                UART_Send_String(&RS232_UART, "> ");
+                UART_Send_String(&RS232_UART, "> SET_AUTO_ACCEL 0\n> ");
                 UART_Printf(&RS232_UART, ErrorCode[g_RS232_CMD_line_return]);
             }
 
