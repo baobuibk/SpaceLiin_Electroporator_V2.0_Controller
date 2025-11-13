@@ -155,7 +155,7 @@ void Impedance_Task(void*)
 
 		UART_Send_String(CMD_line_handle, "> CAP IS DISCHARGING\n> ");
 
-	    Cap_Set_Discharge_All(true, true, true, true);
+	    Cap_Set_Discharge_All(true, false, true, false);
 
         voltage_range_count = 0;
         impedance_range_count = 0;
