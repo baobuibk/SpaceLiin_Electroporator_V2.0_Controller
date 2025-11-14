@@ -508,7 +508,7 @@ int CMD_SET_SEQUENCE_DELAY(int argc, char *argv[])
 
 	receive_argm = atoi(argv[1]);
 
-	if (receive_argm > 100)
+	if (receive_argm > 1000)
 		return CMDLINE_INVALID_ARG;
 	if (receive_argm < 1)
 		return CMDLINE_INVALID_ARG;
@@ -627,9 +627,9 @@ int CMD_SET_PULSE_DELAY(int argc, char *argv[])
 	receive_argm[1] = atoi(argv[2]);
 	receive_argm[2] = atoi(argv[3]);
 
-	if ((receive_argm[0] > 100) || (receive_argm[0] < 1))
+	if ((receive_argm[0] > 1000) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 100) || (receive_argm[1] < 1))
+	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 	else if ((receive_argm[2] > 1000) || (receive_argm[2] < 1))
 		return CMDLINE_INVALID_ARG;
@@ -644,14 +644,16 @@ int CMD_SET_PULSE_DELAY(int argc, char *argv[])
 
 	HB_sequence_array[CMD_sequence_index].pulse_delay_ms = receive_argm[2];
 
-	ps_FSP_TX->CMD									= FSP_CMD_SET_PULSE_DELAY;
-	ps_FSP_TX->Payload.set_pulse_delay.HV_delay		= receive_argm[0];
-	ps_FSP_TX->Payload.set_pulse_delay.LV_delay		= receive_argm[1];
+	ps_FSP_TX->CMD										= FSP_CMD_SET_PULSE_DELAY;
+	ps_FSP_TX->Payload.set_pulse_delay.HV_delay_low		= receive_argm[0];
+	ps_FSP_TX->Payload.set_pulse_delay.HV_delay_high	= receive_argm[0] >> 8;
+	ps_FSP_TX->Payload.set_pulse_delay.LV_delay_low		= receive_argm[1];
+	ps_FSP_TX->Payload.set_pulse_delay.LV_delay_high	= receive_argm[1] >> 8;
 
-	ps_FSP_TX->Payload.set_pulse_delay.Delay_low 	= receive_argm[2];
-	ps_FSP_TX->Payload.set_pulse_delay.Delay_high 	= (receive_argm[2] >> 8);
+	ps_FSP_TX->Payload.set_pulse_delay.Delay_low 		= receive_argm[2];
+	ps_FSP_TX->Payload.set_pulse_delay.Delay_high 		= (receive_argm[2] >> 8);
 
-	fsp_print(5);
+	fsp_print(7);
 	return CMDLINE_OK;
 }
 
@@ -671,9 +673,9 @@ int CMD_SET_PULSE_HV_POS(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 20) || (receive_argm[0] < 1))
+	if ((receive_argm[0] > 100) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 20) || (receive_argm[1] < 1))
+	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 4)) == false)
@@ -684,11 +686,14 @@ int CMD_SET_PULSE_HV_POS(int argc, char *argv[])
 	HB_sequence_array[CMD_sequence_index].hv_pos_on_ms   = receive_argm[0];
 	HB_sequence_array[CMD_sequence_index].hv_pos_off_ms  = receive_argm[1];
 
-	ps_FSP_TX->CMD 	 			 		 	    = FSP_CMD_SET_PULSE_HV_POS;
-	ps_FSP_TX->Payload.set_pulse_HV_pos.OnTime	= receive_argm[0];
-	ps_FSP_TX->Payload.set_pulse_HV_pos.OffTime = receive_argm[1];
+	ps_FSP_TX->CMD 	 			 		 	    	 = FSP_CMD_SET_PULSE_HV_POS;
+	ps_FSP_TX->Payload.set_pulse_HV_pos.OnTime_low 	 = receive_argm[0];
+	ps_FSP_TX->Payload.set_pulse_HV_pos.OnTime_high  = (receive_argm[0] >> 8);
 
-	fsp_print(3);
+	ps_FSP_TX->Payload.set_pulse_HV_pos.OffTime_low  = receive_argm[1];
+	ps_FSP_TX->Payload.set_pulse_HV_pos.OffTime_high = (receive_argm[1] >> 8);
+
+	fsp_print(5);
 	return CMDLINE_OK;
 }
 
@@ -708,9 +713,9 @@ int CMD_SET_PULSE_HV_NEG(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 20) || (receive_argm[0] < 1))
+	if ((receive_argm[0] > 100) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 20) || (receive_argm[1] < 1))
+	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 4)) == false)
@@ -722,10 +727,13 @@ int CMD_SET_PULSE_HV_NEG(int argc, char *argv[])
 	HB_sequence_array[CMD_sequence_index].hv_neg_off_ms  = receive_argm[1];
 
 	ps_FSP_TX->CMD 	 			 		 	    = FSP_CMD_SET_PULSE_HV_NEG;
-	ps_FSP_TX->Payload.set_pulse_HV_neg.OnTime	= receive_argm[0];
-	ps_FSP_TX->Payload.set_pulse_HV_neg.OffTime = receive_argm[1];
+	ps_FSP_TX->Payload.set_pulse_HV_neg.OnTime_low 	 = receive_argm[0];
+	ps_FSP_TX->Payload.set_pulse_HV_neg.OnTime_high  = (receive_argm[0] >> 8);
 
-	fsp_print(3);
+	ps_FSP_TX->Payload.set_pulse_HV_neg.OffTime_low  = receive_argm[1];
+	ps_FSP_TX->Payload.set_pulse_HV_neg.OffTime_high = (receive_argm[1] >> 8);
+
+	fsp_print(5);
 	return CMDLINE_OK;
 }
 
@@ -745,9 +753,9 @@ int CMD_SET_PULSE_LV_POS(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 90) || (receive_argm[0] < 1))
+	if ((receive_argm[0] > 1000) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 90) || (receive_argm[1] < 1))
+	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
@@ -785,9 +793,9 @@ int CMD_SET_PULSE_LV_NEG(int argc, char *argv[])
 	receive_argm[0] = atoi(argv[1]);
 	receive_argm[1] = atoi(argv[2]);
 
-	if ((receive_argm[0] > 90) || (receive_argm[0] < 1))
+	if ((receive_argm[0] > 1000) || (receive_argm[0] < 1))
 		return CMDLINE_INVALID_ARG;
-	else if ((receive_argm[1] > 90) || (receive_argm[1] < 1))
+	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
