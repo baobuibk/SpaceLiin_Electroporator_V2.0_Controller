@@ -22,7 +22,9 @@ static void double_to_string(double value, char *buffer, uint8_t precision);
 tCmdLineEntry g_psCmdTable[] =
 {
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Cap Control Command ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
-		{ "SET_CAP_VOLT",			CMD_SET_CAP_VOLT, 			" : Set cap voltage" },
+		{ "SET_CAP_VOLT_ALL",		CMD_SET_CAP_VOLT_ALL, 		" : Set all cap voltage" },
+		{ "SET_CAP_VOLT_HV",		CMD_SET_CAP_VOLT_HV, 		" : Set hv cap voltage" },
+		{ "SET_CAP_VOLT_LV",		CMD_SET_CAP_VOLT_LV, 		" : Set lv cap voltage" },
 		{ "SET_CAP_CONTROL",		CMD_SET_CAP_CONTROL, 		" : Control charger on/off" },
 		{ "SET_CAP_RELEASE",		CMD_SET_CAP_RELEASE, 		" : Control releasing cap" },
 
@@ -159,7 +161,7 @@ bool 	OVC_flag_signal = false;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: Cap Control Command :::::::: */
-int CMD_SET_CAP_VOLT(int argc, char *argv[])
+int CMD_SET_CAP_VOLT_ALL(int argc, char *argv[])
 {
 	if (g_is_calib_running == true)
 	{
@@ -181,7 +183,86 @@ int CMD_SET_CAP_VOLT(int argc, char *argv[])
 	else if ((receive_argm[1] > 50) || (receive_argm[1] < 0))
 		return CMDLINE_INVALID_ARG;
 
+	uint8_t is_return = 0;
+
+	if (Cap_Get_is_Charge(&g_Cap_300V) == true)
+	{
+		UART_Send_String(CMD_line_handle, "> HV CAP IS CHARGING, PLEASE DISABLE CHARGING BEFORE SET NEW VOLT\n");
+		is_return = 1;
+	}
+
+	if (Cap_Get_is_Charge(&g_Cap_50V) == true)
+	{
+		UART_Send_String(CMD_line_handle, "> LV CAP IS CHARGING, PLEASE DISABLE CHARGING BEFORE SET NEW VOLT\n");
+		is_return = 1;
+	}
+
+	if (is_return == 1)
+	{
+		return CMDLINE_OK;
+	}
+	
 	Cap_Set_Volt_All(receive_argm[0], receive_argm[1], true, true);
+
+	return CMDLINE_OK;
+}
+
+int CMD_SET_CAP_VOLT_HV(int argc, char *argv[])
+{
+	if (g_is_calib_running == true)
+	{
+		return CMDLINE_CALIB_IS_RUNNING;
+	}
+
+	if (argc < 2)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 2)
+		return CMDLINE_TOO_MANY_ARGS;
+
+	int receive_argm;
+
+	receive_argm = atoi(argv[1]);
+
+	if ((receive_argm > 300) || (receive_argm < 0))
+		return CMDLINE_INVALID_ARG;
+
+	if (Cap_Get_is_Charge(&g_Cap_300V) == true)
+	{
+		UART_Send_String(CMD_line_handle, "> HV CAP IS CHARGING, PLEASE DISABLE CHARGING BEFORE SET NEW VOLT\n");
+		return CMDLINE_OK;
+	}
+
+	Cap_Set_Volt(&g_Cap_300V, receive_argm, true);
+
+	return CMDLINE_OK;
+}
+
+int CMD_SET_CAP_VOLT_LV(int argc, char *argv[])
+{
+	if (g_is_calib_running == true)
+	{
+		return CMDLINE_CALIB_IS_RUNNING;
+	}
+
+	if (argc < 2)
+		return CMDLINE_TOO_FEW_ARGS;
+	else if (argc > 2)
+		return CMDLINE_TOO_MANY_ARGS;
+
+	int receive_argm;
+
+	receive_argm = atoi(argv[1]);
+
+	if ((receive_argm > 50) || (receive_argm < 0))
+		return CMDLINE_INVALID_ARG;
+
+	if (Cap_Get_is_Charge(&g_Cap_50V) == true)
+	{
+		UART_Send_String(CMD_line_handle, "> LV CAP IS CHARGING, PLEASE DISABLE CHARGING BEFORE SET NEW VOLT\n");
+		return CMDLINE_OK;
+	}
+
+	Cap_Set_Volt(&g_Cap_50V, receive_argm, true);
 
 	return CMDLINE_OK;
 }
@@ -207,6 +288,40 @@ int CMD_SET_CAP_CONTROL(int argc, char *argv[])
 		return CMDLINE_INVALID_ARG;
 	else if ((receive_argm[1] > 1) || (receive_argm[1] < 0))
 		return CMDLINE_INVALID_ARG;
+
+	uint16_t set_volt;
+	uint16_t measure_volt;
+	uint8_t  is_return = 0;
+
+	if (receive_argm[0] == 1)
+	{
+		set_volt 	 = Cap_Get_Set_Volt(&g_Cap_300V);
+		measure_volt = Cap_Measure_Volt(&g_Cap_300V);
+
+		if (set_volt < measure_volt)
+		{
+			UART_Send_String(CMD_line_handle, "> CURRENT HV VOLT IS HIGHER THAN YOUR SET VOLT, PLEASE DISCHARGE BEFORE CHARGING\n");
+			is_return = 1;
+		}
+	}
+
+	if (receive_argm[1] == 1)
+	{
+		set_volt 	 = Cap_Get_Set_Volt(&g_Cap_50V);
+		measure_volt = Cap_Measure_Volt(&g_Cap_50V);
+
+		if (set_volt < measure_volt)
+		{
+			UART_Send_String(CMD_line_handle, "> CURRENT LV VOLT IS HIGHER THAN YOUR SET VOLT, PLEASE DISCHARGE BEFORE CHARGING\n");
+			is_return = 1;
+		}
+	}
+
+	if (is_return == 1)
+	{
+		return CMDLINE_OK;
+	}
+	
 
 	Cap_Set_Charge_All(receive_argm[0], receive_argm[1], true, true);
 
@@ -678,6 +793,23 @@ int CMD_SET_PULSE_HV_POS(int argc, char *argv[])
 	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
+	if (receive_argm [0] < receive_argm[1])
+	{
+		if ((receive_argm[0] * 100) < receive_argm[1])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN ON IS LESS THAN 100 TIMES OF TURN OFF\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
+	else
+	{
+		if ((receive_argm[1] * 100) < receive_argm[0])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN OFF IS LESS THAN 100 TIMES OF TURN ON\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
+
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 4)) == false)
 	{
 		HB_sequence_array[CMD_sequence_index].is_setted |= (1 << 4);
@@ -717,6 +849,23 @@ int CMD_SET_PULSE_HV_NEG(int argc, char *argv[])
 		return CMDLINE_INVALID_ARG;
 	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
+
+	if (receive_argm [0] < receive_argm[1])
+	{
+		if ((receive_argm[0] * 100) < receive_argm[1])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN ON IS LESS THAN 100 TIMES OF TURN OFF\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
+	else
+	{
+		if ((receive_argm[1] * 100) < receive_argm[0])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN OFF IS LESS THAN 100 TIMES OF TURN ON\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 4)) == false)
 	{
@@ -758,6 +907,23 @@ int CMD_SET_PULSE_LV_POS(int argc, char *argv[])
 	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
 
+	if (receive_argm [0] < receive_argm[1])
+	{
+		if ((receive_argm[0] * 100) < receive_argm[1])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN ON IS LESS THAN 100 TIMES OF TURN OFF\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
+	else
+	{
+		if ((receive_argm[1] * 100) < receive_argm[0])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN OFF IS LESS THAN 100 TIMES OF TURN ON\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
+
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
 	{
 		HB_sequence_array[CMD_sequence_index].is_setted |= (1 << 5);
@@ -797,6 +963,23 @@ int CMD_SET_PULSE_LV_NEG(int argc, char *argv[])
 		return CMDLINE_INVALID_ARG;
 	else if ((receive_argm[1] > 1000) || (receive_argm[1] < 1))
 		return CMDLINE_INVALID_ARG;
+
+	if (receive_argm [0] < receive_argm[1])
+	{
+		if ((receive_argm[0] * 100) < receive_argm[1])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN ON IS LESS THAN 100 TIMES OF TURN OFF\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
+	else
+	{
+		if ((receive_argm[1] * 100) < receive_argm[0])
+		{
+			UART_Send_String(CMD_line_handle, "> TURN OFF IS LESS THAN 100 TIMES OF TURN ON\n");
+			return CMDLINE_INVALID_ARG;
+		}
+	}
 
 	if ((HB_sequence_array[CMD_sequence_index].is_setted & (1 << 5)) == false)
 	{

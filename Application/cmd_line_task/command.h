@@ -67,7 +67,9 @@ extern uint8_t current_limit_mA;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: Cap Control Command :::::::: */
-int CMD_SET_CAP_VOLT(int argc, char *argv[]);
+int CMD_SET_CAP_VOLT_ALL(int argc, char *argv[]);
+int CMD_SET_CAP_VOLT_HV(int argc, char *argv[]);
+int CMD_SET_CAP_VOLT_LV(int argc, char *argv[]);
 int CMD_SET_CAP_CONTROL(int argc, char *argv[]);
 int CMD_SET_CAP_RELEASE(int argc, char *argv[]);
 
