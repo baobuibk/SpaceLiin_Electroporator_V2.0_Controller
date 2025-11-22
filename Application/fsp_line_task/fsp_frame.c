@@ -41,6 +41,48 @@ void FSP_Line_Process() {
 	case FSP_CMD_SET_PULSE_CONTROL:
 	{
 		is_h_bridge_enable = ps_FSP_RX->Payload.set_pulse_control.State;
+
+		if (is_h_bridge_enable == 0)
+		{
+			UART_Send_String(CMD_line_handle, "H-BRIDGE FINISH PULSING\n> ");
+		}
+		
+		break;
+	}
+
+	case FSP_CMD_GET_PULSE_STAGE:
+	{
+		uint8_t sequence_index  = ps_FSP_RX->Payload.get_pulse_stage.index;
+		uint8_t volt_stage		= ps_FSP_RX->Payload.get_pulse_stage.volt_stage;
+		uint8_t is_end			= ps_FSP_RX->Payload.get_pulse_stage.is_begin_or_end;
+
+		uint16_t current_volt	= 0;
+		char* volt_stage_list[] =
+		{
+			"HV POS",
+			"HV NEG",
+			"LV POS",
+			"LV NEG"
+		};
+
+		if ((volt_stage == 0) || (volt_stage == 1))
+		{
+			current_volt = Cap_Measure_Volt(&g_Cap_300V);
+		}
+		else
+		{
+			current_volt = Cap_Measure_Volt(&g_Cap_50V);
+		}
+
+		if (is_end == 0)
+		{
+			UART_Printf(CMD_line_handle, "SEQUENCE INDEX: %d, %s STAGE START VOLT: %dV\n> ", sequence_index, volt_stage_list[volt_stage], current_volt);
+		}
+		else
+		{
+			UART_Printf(CMD_line_handle, "SEQUENCE INDEX: %d, %s STAGE END VOLT: %dV\n> \n> ", sequence_index, volt_stage_list[volt_stage], current_volt);
+		}
+		
 		break;
 	}
 

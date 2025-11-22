@@ -1080,6 +1080,8 @@ int CMD_SET_PULSE_CONTROL(int argc, char *argv[])
 
 	is_h_bridge_enable = receive_argm;
 
+	UART_Send_String(CMD_line_handle, "> H-BRIDGE IS PULSING\n");
+
 	ps_FSP_TX->CMD = FSP_CMD_SET_PULSE_CONTROL;
 	ps_FSP_TX->Payload.set_pulse_control.State = receive_argm;
 
@@ -1147,16 +1149,16 @@ int CMD_GET_SEQUENCE_ALL(int argc, char *argv[])
 		UART_Send_String(CMD_line_handle, "> \n");
 
 		UART_Printf(CMD_line_handle, "> HV PULSE POS ON TIME: %dms; HV PULSE POS OFF TIME: %dms\n",
-		HB_sequence_array[CMD_sequence_index].hv_pos_on_ms, HB_sequence_array[CMD_sequence_index].hv_pos_off_ms);
+		HB_sequence_array[i].hv_pos_on_ms, HB_sequence_array[i].hv_pos_off_ms);
 
 		UART_Printf(CMD_line_handle, "> HV PULSE NEG ON TIME: %dms; HV PULSE NEG OFF TIME: %dms\n",
-		HB_sequence_array[CMD_sequence_index].hv_neg_on_ms, HB_sequence_array[CMD_sequence_index].hv_neg_off_ms);
+		HB_sequence_array[i].hv_neg_on_ms, HB_sequence_array[i].hv_neg_off_ms);
 
 		UART_Printf(CMD_line_handle, "> LV PULSE POS ON TIME: %dms; LV PULSE POS OFF TIME: %dms\n",
-		HB_sequence_array[CMD_sequence_index].lv_pos_on_ms, HB_sequence_array[CMD_sequence_index].lv_pos_off_ms);
+		HB_sequence_array[i].lv_pos_on_ms, HB_sequence_array[i].lv_pos_off_ms);
 		
 		UART_Printf(CMD_line_handle, "> LV PULSE NEG ON TIME: %dms; LV PULSE NEG OFF TIME: %dms\n",
-		HB_sequence_array[CMD_sequence_index].lv_neg_on_ms, HB_sequence_array[CMD_sequence_index].lv_neg_off_ms);
+		HB_sequence_array[i].lv_neg_on_ms, HB_sequence_array[i].lv_neg_off_ms);
 
 		UART_Send_String(CMD_line_handle, "> \n");
 	}

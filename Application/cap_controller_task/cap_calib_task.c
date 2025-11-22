@@ -97,7 +97,8 @@ void Calib_Task_Init(void)
         //.average_value  = 0.09768416035,
         //.average_value  = 0.098172043,
         //.average_value  = 0.09837806874,
-        .average_value  = 0.097978723,
+        //.average_value  = 0.097978723,
+        .average_value  = 0.09285372809,
     };
 
     g_Cap_50V.calib.coefficient_value = (Cap_Calib_Coefficient_typedef)
@@ -110,7 +111,9 @@ void Calib_Task_Init(void)
         //.average_value  = 55.2,
         //.average_value  = 0.01228327228,
         //.average_value  = 0.014742014,
-        .average_value  = 0.014792899,
+        // .average_value  = 0.014792899,
+        // .average_value  = 0.0148978693,
+        .average_value  = 0.0150462669,
         //.average_value  = 0.01394221998,
         //.average_value  = 0.025,
     };
