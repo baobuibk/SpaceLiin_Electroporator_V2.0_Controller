@@ -124,7 +124,7 @@ void UART_Send_String(uart_stdio_typedef* p_uart, const char *pcBuf)
 uint16_t UART_Write(uart_stdio_typedef* p_uart, const char *pcBuf, uint16_t ui16Len)
 {
 
-    uint8_t uIdx;
+    uint16_t uIdx;
 
     //
     // Check for valid arguments.
@@ -845,14 +845,16 @@ uint16_t UART_get_buffer_count(volatile uint16_t *pui16Read,
 //! \return Returns the number of bytes of data currently in the buffer.
 //
 //*****************************************************************************
-
 uint16_t UART_advance_buffer_index(volatile uint16_t* pui16Index, uint16_t ui16Size)
 {
-    *pui16Index = (*pui16Index + 1) % ui16Size;
+    uint16_t next = *pui16Index + 1;
+    if (next >= ui16Size) {
+        next = 0;
+    }
+    *pui16Index = next;
 
-    return(*pui16Index);
+    return next;
 }
-
 
 //*****************************************************************************
 //

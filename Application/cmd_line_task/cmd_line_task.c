@@ -411,9 +411,24 @@ void RF_CMD_Line_Task(void*)
 }
 
 /* :::::::::: IRQ Handler ::::::::::::: */
+// Private helper - does NOT touch NVIC
+static void UART_Write_Byte_Internal(uart_stdio_typedef* p_uart)
+{
+    // Write data to the hardware
+    LL_USART_TransmitData8(p_uart->handle, p_uart->p_TX_buffer[p_uart->TX_read_index]);
+    
+    // Advance the index safely
+    UART_advance_buffer_index(&(p_uart)->TX_read_index, p_uart->TX_size);
+}
+
 void RS232_IRQHandler(void)
 {
-    if(LL_USART_IsActiveFlag_TXE(RS232_UART.handle) == true)
+    if(LL_USART_IsActiveFlag_ORE(RF_UART.handle))
+    {
+        LL_USART_ClearFlag_ORE(RF_UART.handle);
+    }
+
+    if(LL_USART_IsActiveFlag_TXE(RS232_UART.handle) && LL_USART_IsEnabledIT_TXE(RS232_UART.handle))
     {
         if(TX_BUFFER_EMPTY(&RS232_UART))
         {
@@ -423,7 +438,7 @@ void RS232_IRQHandler(void)
         else
         {
             // There is more data in the output buffer. Send the next byte
-            UART_Prime_Transmit(&RS232_UART);
+            UART_Write_Byte_Internal(&RS232_UART);
         }
     }
 
@@ -452,7 +467,12 @@ void RS232_IRQHandler(void)
 
 void RF_IRQHandler(void)
 {
-    if(LL_USART_IsActiveFlag_TXE(RF_UART.handle) == true)
+    if(LL_USART_IsActiveFlag_ORE(RF_UART.handle))
+    {
+        LL_USART_ClearFlag_ORE(RF_UART.handle);
+    }
+
+    if(LL_USART_IsActiveFlag_TXE(RF_UART.handle) && LL_USART_IsEnabledIT_TXE(RF_UART.handle))
     {
         if(TX_BUFFER_EMPTY(&RF_UART))
         {
@@ -462,7 +482,7 @@ void RF_IRQHandler(void)
         else
         {
             // There is more data in the output buffer. Send the next byte
-            UART_Prime_Transmit(&RF_UART);
+            UART_Write_Byte_Internal(&RF_UART);
         }
     }
 

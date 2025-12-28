@@ -103,9 +103,19 @@ void FSP_Line_Task(void*)
 }
 
 /* :::::::::: IRQ Handler ::::::::::::: */
+// Private helper - does NOT touch NVIC
+static void UART_Write_Byte_Internal(uart_stdio_typedef* p_uart)
+{
+    // Write data to the hardware
+    LL_USART_TransmitData8(p_uart->handle, p_uart->p_TX_buffer[p_uart->TX_read_index]);
+    
+    // Advance the index safely
+    UART_advance_buffer_index(&(p_uart)->TX_read_index, p_uart->TX_size);
+}
+
 void GPP_UART_IRQHandler(void)
 {
-	if (LL_USART_IsActiveFlag_TXE(GPP_UART.handle) == true)
+	if(LL_USART_IsActiveFlag_TXE(GPP_UART.handle) && LL_USART_IsEnabledIT_TXE(GPP_UART.handle))
 	{
 		if (TX_BUFFER_EMPTY(&GPP_UART))
 		{
@@ -115,7 +125,7 @@ void GPP_UART_IRQHandler(void)
 		else
 		{
 			// There is more data in the output buffer. Send the next byte
-			UART_Prime_Transmit(&GPP_UART);
+			UART_Write_Byte_Internal(&GPP_UART);
 		}
 	}
 
