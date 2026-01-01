@@ -30,35 +30,35 @@ Charge_Range_t Cap_300V_charge_range[CAP_300V_CHARNGE_RANGE_MAX] =
     },
     {
         .Volt_Value = 50,
-        .Duty_Max = 15,
-    },
-    {
-        .Volt_Value = 75,
         .Duty_Max = 20,
     },
     {
-        .Volt_Value = 100,
-        .Duty_Max = 30,
+        .Volt_Value = 75,
+        .Duty_Max = 25,
     },
     {
-        .Volt_Value = 150,
+        .Volt_Value = 100,
         .Duty_Max = 35,
     },
     {
-        .Volt_Value = 200,
+        .Volt_Value = 150,
         .Duty_Max = 40,
+    },
+    {
+        .Volt_Value = 200,
+        .Duty_Max = 45,
     },
     {
         .Volt_Value = 250,
-        .Duty_Max = 40,
+        .Duty_Max = 45,
     },
     {
         .Volt_Value = 275,
-        .Duty_Max = 40,
+        .Duty_Max = 45,
     },
     {
         .Volt_Value = 300,
-        .Duty_Max = 40,
+        .Duty_Max = 45,
     }
 };
 
