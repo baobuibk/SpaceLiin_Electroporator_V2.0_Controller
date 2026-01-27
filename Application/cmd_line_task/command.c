@@ -159,6 +159,8 @@ uint8_t current_limit_mA = 0;
 
 bool 	OVC_flag_signal = false;
 
+extern bool is_ready_for_measure_impedance;
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: Cap Control Command :::::::: */
 int CMD_SET_CAP_VOLT_ALL(int argc, char *argv[])
@@ -1658,7 +1660,9 @@ int CMD_MEASURE_IMPEDANCE(int argc, char *argv[])
 	// UART_Printf(&CMD_line_handle, "> CHARGING HV CAP TO %dV\r\n", receive_argm[2]);
 	// g_PID_is_300V_on = 1;
 
-	Cap_Set_Discharge(&g_Cap_300V, false, false);
+	UART_Send_String(CMD_line_handle, "> HV CAP IS DISCHARGING TO READY FOR MEASURE IMPEDANCE\n");
+	is_ready_for_measure_impedance = false;
+	Cap_Set_Discharge(&g_Cap_300V, true, true);
 
 	is_measure_impedance_enable = true;
 	//is_300V_notified_enable = true;

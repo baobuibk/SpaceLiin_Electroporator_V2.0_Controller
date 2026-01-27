@@ -224,6 +224,8 @@ Cap_Controller_Task_typedef g_Cap_50V =
     .is_notified_enable = false,
 };
 
+extern bool is_ready_for_measure_impedance;
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Function ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 /* :::::::::: Cap Controller Init :::::::: */
 void Cap_Controller_Init(void)
@@ -892,6 +894,7 @@ static void Cap_Controller_Discharge_Monitor_300V(void)
             s_Cap_300V.is_notified_enable = false;
         }
 
+        is_ready_for_measure_impedance = true;
         g_Cap_300V.cap_state = CAP_IS_FINISH_DISCHARGING;
     }
 }

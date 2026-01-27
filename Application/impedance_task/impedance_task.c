@@ -66,8 +66,13 @@ extern uint16_t Impedance_Period;
 extern uint8_t  Impedance_pos_pole, Impedance_neg_pole;
 
 extern bool     is_cap_release_after_measure;
+// condition variable to check whether, measure impedance
+// task itself is enable to run.
 extern bool     is_measure_impedance_enable;
 
+// condition variable to check whether, everything in the
+// system is ready for measure impendace.
+bool is_ready_for_measure_impedance = false;
 bool is_impedance_volt_complete = false;
 bool is_measure_impedance_completed = false;
 
@@ -96,6 +101,13 @@ void Impedance_Task(void*)
     {
     case IMPEDANCE_SET_VOLT_STATE:
     {
+        if (is_ready_for_measure_impedance == false)
+        {
+            return;
+        }
+
+	    UART_Send_String(CMD_line_handle, "MEASURE IMPEDANCE START\n> ");
+        
         Cap_Set_Volt(&g_Cap_300V, voltage_range_array[voltage_range_count], true);
         voltage_range_count++;
 
