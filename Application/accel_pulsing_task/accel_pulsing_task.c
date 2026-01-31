@@ -39,7 +39,9 @@ static void fsp_print(uint8_t packet_length);
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Public Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 // Remember to change Threshold_Accel in .h file
 H3LIS331DL_data_typedef Threshold_Accel = { 0, 0, 2000 };
-H3LIS331DL_data_typedef Auto_Accel_Data;
+int32_t					current_Threshold_Accel;
+int32_t 				current_Auto_Accel_Data;
+int32_t* 				p_Auto_Accel_Data;
 
 #define ACCEL_SENSOR 	ONBOARD_SENSOR_READ_H3LIS331DL
 #define P_ACCEL_REQUEST &Onboard_Sensor_H3LIS331DL_rb
@@ -64,6 +66,26 @@ void Accel_Pulsing_Task(void*)
 
 		//Is_Sensor_Read_Complete();
 		Sensor_Read_Value(ACCEL_SENSOR);
+
+		/**
+		 * Prepare current Threshold accel and Auto Accel Data depend on
+		 * user choose x, y or z.
+		 */
+		if (Threshold_Accel.x != 0)
+		{
+			current_Threshold_Accel = Threshold_Accel.x;
+			p_Auto_Accel_Data = &(ACCEL_DATA.x);
+		}
+		else if (Threshold_Accel.y != 0)
+		{
+			current_Threshold_Accel = Threshold_Accel.y;
+			p_Auto_Accel_Data = &(ACCEL_DATA.y);
+		}
+		else if (Threshold_Accel.z != 0)
+		{
+			current_Threshold_Accel = Threshold_Accel.z;
+			p_Auto_Accel_Data = &(ACCEL_DATA.z);
+		}
 		
 		auto_pulsing_state = SEND_RESQUEST_SENSOR;
 		get_sensor_timeout = AUTO_PULSE_TIMEOUT;
@@ -88,7 +110,7 @@ void Accel_Pulsing_Task(void*)
 		else if (return_value == I2C_OK)
 		{
 			// Lấy dữ liệu và in liên tục ra màn hình
-			Auto_Accel_Data = ACCEL_DATA;
+			current_Auto_Accel_Data = *p_Auto_Accel_Data;
 
 			frame_count++;
 
@@ -99,7 +121,7 @@ void Accel_Pulsing_Task(void*)
 				
 			UART_Printf(CMD_line_handle, "\033[13G%5d\033[22G%5d\033[31G%5d  %d  ", ACCEL_DATA.x, ACCEL_DATA.y, ACCEL_DATA.z, frame_count);
 
-			if (Auto_Accel_Data.z >= Threshold_Accel.z)
+			if (current_Auto_Accel_Data >= current_Threshold_Accel)
 			{
 				//start pulsing
 				auto_pulsing_state = SYSTERM_PULSING_RUN;
@@ -139,6 +161,8 @@ void Accel_Pulsing_Task(void*)
 		ps_FSP_TX->Payload.set_pulse_control.State = true;
 		fsp_print(2);
 
+		UART_Send_String(CMD_line_handle, "\e[?25h\n> ");
+
 		auto_pulsing_state = SYSTERM_PULSING_DONE;
 		break;
 	}
@@ -157,10 +181,8 @@ void Accel_Pulsing_Task(void*)
 		get_sensor_timeout = AUTO_PULSE_TIMEOUT;
 		is_streaming_enable = false;
 
-		UART_Send_String(CMD_line_handle, "\e[?25h\n");
-		UART_Send_String(CMD_line_handle, "> SYSTEM IS TRIGGERED\n");
+		UART_Send_String(CMD_line_handle, "\n> SYSTEM IS TRIGGERED\n> ");
 
-		SchedulerTaskDisable(ACCEL_PULSING_TASK);
 		auto_pulsing_state = DISABLE_AUTO_PULSING;
 
 		break;
@@ -173,7 +195,6 @@ void Accel_Pulsing_Task(void*)
 		// move up 1 line, turn off console
 		UART_Send_String(CMD_line_handle, "\e[?25h");
 
-		SchedulerTaskDisable(ACCEL_PULSING_TASK);
 		auto_pulsing_state = DISABLE_AUTO_PULSING;
 
 		break;

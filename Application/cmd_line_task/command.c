@@ -1378,25 +1378,62 @@ int CMD_GET_PULSE_ALL(int argc, char *argv[])
 /* :::::::::: Auto Pulsing Command :::::::::: */
 int CMD_SET_THRESHOLD_ACCEL(int argc, char *argv[])
 {
-	if (argc < 2)
+	if (argc < 4)
 		return CMDLINE_TOO_FEW_ARGS;
-	else if (argc > 2)
+	else if (argc > 4)
 		return CMDLINE_TOO_MANY_ARGS;
 
 	//int16_t x = (int16_t)atoi(argv[1]);
 	//int16_t y = (int16_t)atoi(argv[2]);
 	//int16_t z = (int16_t)atoi(argv[3]);
-
-	int16_t z = (int16_t)atoi(argv[1]);
-
-	if (z < 1)
-		return CMDLINE_INVALID_ARG;
-	else if (z > 2000)
-		return CMDLINE_INVALID_ARG;
 	
-	Threshold_Accel.x = 5;
-	Threshold_Accel.y = 5;
-	Threshold_Accel.z = z;
+	int32_t threshold = (int32_t)atoi(argv[2]);
+
+	if (strcmp(argv[3], "MG") == 0)
+	{
+		;
+	}
+	else if (strcmp(argv[3], "G") == 0)
+	{
+		threshold *= 1000; //convert g to mg
+	}
+	else
+	{
+		return CMDLINE_INVALID_ARG;
+	}
+	
+	if (threshold < 1)
+		return CMDLINE_INVALID_ARG;
+	else if (threshold > 400000) // 400.000g
+		return CMDLINE_INVALID_ARG;
+
+	if (strlen(argv[1]) > 2)
+	{
+		return CMDLINE_INVALID_ARG;
+	}
+
+	if (strcmp(argv[1], "X") == 0)
+	{
+		Threshold_Accel.x = threshold;
+		Threshold_Accel.y = 0;
+		Threshold_Accel.z = 0;
+	}
+	else if (strcmp(argv[1], "Y") == 0)
+	{
+		Threshold_Accel.x = 0;
+		Threshold_Accel.y = threshold;
+		Threshold_Accel.z = 0;
+	}
+	else if (strcmp(argv[1], "Z") == 0)
+	{
+		Threshold_Accel.x = 0;
+		Threshold_Accel.y = 0;
+		Threshold_Accel.z = threshold;
+	}
+	else
+	{
+		return CMDLINE_INVALID_ARG;
+	}
 
 	return CMDLINE_OK;
 }
@@ -1408,8 +1445,16 @@ int CMD_GET_THRESHOLD_ACCEL(int argc, char *argv[])
 	else if (argc > 1)
 		return CMDLINE_TOO_MANY_ARGS;
 
+	char thresh_x[7] = {0};
+	char thresh_y[7] = {0};
+	char thresh_z[7] = {0};
+
+	double_to_string(((double)Threshold_Accel.x) / 1000.0, thresh_x, 3);
+	double_to_string(((double)Threshold_Accel.y) / 1000.0, thresh_y, 3);
+	double_to_string(((double)Threshold_Accel.z) / 1000.0, thresh_z, 3);
+
 	// In giá trị ra
-	UART_Printf(CMD_line_handle, "> Threshold Accel is: %d %d %d\n", Threshold_Accel.x, Threshold_Accel.y, Threshold_Accel.z);
+	UART_Printf(CMD_line_handle, "> Threshold Accel is: %sg %sg %sg\n", thresh_x, thresh_y, thresh_z);
 
 	return CMDLINE_OK;
 }
