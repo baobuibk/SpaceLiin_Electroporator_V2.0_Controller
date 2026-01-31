@@ -96,6 +96,8 @@ tCmdLineEntry g_psCmdTable[] =
 		{ "GET_SENSOR_BMP390", 		CMD_GET_SENSOR_BMP390, 		" : Get temp, pressure and altitude" },
 
 		{ "GET_SENSOR_H3LIS", 		CMD_GET_SENSOR_H3LIS, 		" : Get accel from sensor H3LIS331DL" },
+		{ "SET_SENSOR_H3LIS_FS", 	CMD_SET_SENSOR_H3LIS_FS, 	" : Set full scale setting for sensor H3LIS331DL" },
+		{ "GET_SENSOR_H3LIS_FS", 	CMD_GET_SENSOR_H3LIS_FS, 	" : Get full scale setting for sensor H3LIS331DL" },
 
 		/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Ultility Command ~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 		{ "HELP", 					CMD_HELP,					" : Display list of commands" },
@@ -2094,6 +2096,131 @@ int CMD_GET_SENSOR_H3LIS(int argc, char *argv[])
 		}
 
 		UART_Printf(CMD_line_handle, "> ACCEL x: %dmg; ACCEL y: %dmg; ACCEL z: %dmg\n", H3LIS_Accel.x, H3LIS_Accel.y, H3LIS_Accel.z);
+		CMD_process_state = 0;
+		return CMDLINE_OK;
+	}
+
+	default:
+		break;
+	}
+
+	return CMDLINE_BAD_CMD;
+}
+
+int CMD_SET_SENSOR_H3LIS_FS(int argc, char *argv[])
+{
+	switch (CMD_process_state)
+	{
+	case 0:
+	{
+		if (argc < 2)
+			return CMDLINE_TOO_FEW_ARGS;
+		else if (argc > 2)
+			return CMDLINE_TOO_MANY_ARGS;
+
+		int receive_argm;
+
+		receive_argm  = atoi(argv[1]);
+
+		if ((receive_argm != 100) && (receive_argm != 200) && (receive_argm != 400))
+		{
+			return CMDLINE_INVALID_ARG;
+		}
+
+		switch (receive_argm)
+		{
+		case 100:
+			Sensor_Read_Value(ONBOARD_SENSOR_SET_FS_100G);
+			break;
+		case 200:
+			Sensor_Read_Value(ONBOARD_SENSOR_SET_FS_200G);
+			break;
+		case 400:
+			Sensor_Read_Value(ONBOARD_SENSOR_SET_FS_400G);
+			break;	
+		
+		default:
+			break;
+		}
+
+		CMD_process_state = 1;
+		return CMDLINE_IS_PROCESSING;
+	}
+
+	case 1:
+	{
+		i2c_result_t return_value = Is_Sensor_Read_Complete(&Onboard_Sensor_H3LIS331DL_rb);
+
+		if (return_value == I2C_IS_RUNNING)
+		{
+			return CMDLINE_IS_PROCESSING;
+		}
+		else if (return_value != I2C_OK)
+		{
+			CMD_process_state = 0;
+			return CMDLINE_OK;
+		}
+
+		UART_Send_String(CMD_line_handle, "> SET FULL SCALE FOR H3LIS331DL SUCCESSFULLY\n");
+		CMD_process_state = 0;
+		return CMDLINE_OK;
+	}
+
+	default:
+		break;
+	}
+
+	return CMDLINE_BAD_CMD;
+}
+
+int CMD_GET_SENSOR_H3LIS_FS(int argc, char *argv[])
+{
+	switch (CMD_process_state)
+	{
+	case 0:
+	{
+		if (argc < 1)
+			return CMDLINE_TOO_FEW_ARGS;
+		else if (argc > 1)
+			return CMDLINE_TOO_MANY_ARGS;
+
+		Sensor_Read_Value(ONBOARD_SENSOR_GET_FS);
+		CMD_process_state = 1;
+		return CMDLINE_IS_PROCESSING;
+	}
+
+	case 1:
+	{
+		i2c_result_t return_value = Is_Sensor_Read_Complete(&Onboard_Sensor_H3LIS331DL_rb);
+
+		if (return_value == I2C_IS_RUNNING)
+		{
+			return CMDLINE_IS_PROCESSING;
+		}
+		else if (return_value != I2C_OK)
+		{
+			CMD_process_state = 0;
+			return CMDLINE_OK;
+		}
+
+		uint16_t fs = 0;
+
+		switch (H3LIS_Accel.full_scale)
+		{
+		case 0:
+			fs = 100;
+			break;
+		case 1:
+			fs = 200;
+			break;
+		case 3:
+			fs = 400;
+		
+		default:
+			break;
+		}
+
+		UART_Printf(CMD_line_handle, "> H3LIS331DL FULL SCALE: %dG\n", fs);
 		CMD_process_state = 0;
 		return CMDLINE_OK;
 	}

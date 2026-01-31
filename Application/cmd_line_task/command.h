@@ -141,6 +141,8 @@ int CMD_GET_SENSOR_ALTITUDE(int argc, char *argv[]);
 int CMD_GET_SENSOR_BMP390(int argc, char *argv[]);
 
 int CMD_GET_SENSOR_H3LIS(int argc, char *argv[]);
+int CMD_SET_SENSOR_H3LIS_FS(int argc, char *argv[]);
+int CMD_GET_SENSOR_H3LIS_FS(int argc, char *argv[]);
 
 /* :::::::::: Ultility Command :::::::: */
 int CMD_HELP(int argc, char *argv[]);

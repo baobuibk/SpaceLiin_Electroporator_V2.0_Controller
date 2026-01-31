@@ -212,13 +212,23 @@ void Sensor_Read_Task(void*)
 			continue;
 		}
 
-		if (p_current_sensor->p_request_buffer[p_current_sensor->read_index].request_type == SENSOR_READ_TYPE)
+		switch (p_current_sensor->p_request_buffer[p_current_sensor->read_index].request_type)
 		{
+		case SENSOR_READ_TYPE:
 			is_complete = p_current_sensor->pfn_sensor_function->read_value(p_current_sensor->p_i2c ,current_request);
-		}
-		else if (p_current_sensor->p_request_buffer[p_current_sensor->read_index].request_type == SENSOR_INIT_TYPE)
-		{
+			break;
+		case SENSOR_INIT_TYPE:
 			is_complete = p_current_sensor->pfn_sensor_function->init(p_current_sensor->p_i2c);
+			break;
+		case SENSOR_SET_FS_TYPE:
+			is_complete = p_current_sensor->pfn_sensor_function->set_full_scale(p_current_sensor->p_i2c, current_request);
+			break;
+		case SENSOR_GET_FS_TYPE:
+			is_complete = p_current_sensor->pfn_sensor_function->get_full_scale(p_current_sensor->p_i2c);
+			break;
+
+		default:
+			break;
 		}
 
 		if (sensor_I2C_error_handle(p_current_sensor, &is_complete) == 1)
@@ -242,6 +252,8 @@ void Sensor_Read_Task(void*)
 bool Sensor_Read_Value(Sensor_Read_typedef read_type)
 {
 	sensor_request_rb_t* p_sensor_rb = NULL;
+	bool is_set_fs = false;
+	bool is_get_fs = false;
 
 	switch (read_type)
     {
@@ -275,6 +287,22 @@ bool Sensor_Read_Value(Sensor_Read_typedef read_type)
 		break;
 	}
 
+	case ONBOARD_SENSOR_SET_FS_100G:
+	case ONBOARD_SENSOR_SET_FS_200G:
+	case ONBOARD_SENSOR_SET_FS_400G:
+	{
+		is_set_fs = true;
+		p_sensor_rb = &Onboard_Sensor_H3LIS331DL_rb;
+		break;
+	}
+
+	case ONBOARD_SENSOR_GET_FS:
+	{
+		is_get_fs = true;
+		p_sensor_rb = &Onboard_Sensor_H3LIS331DL_rb;
+		break;
+	}
+
 	default:
 		return 0;
 	}
@@ -294,6 +322,21 @@ bool Sensor_Read_Value(Sensor_Read_typedef read_type)
 		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].is_requested = true;
 		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request_type = SENSOR_INIT_TYPE;
 		ADVANCE_SENSOR_REQUEST_WRITE_INDEX(p_sensor_rb);
+	}
+	else if (is_set_fs == true)
+	{
+		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].is_requested = true;
+		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request_type = SENSOR_SET_FS_TYPE;
+		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request 	 = read_type;
+		ADVANCE_SENSOR_REQUEST_WRITE_INDEX(p_sensor_rb);
+		return true;
+	}
+	else if (is_get_fs == true)
+	{
+		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].is_requested = true;
+		p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].request_type = SENSOR_GET_FS_TYPE;
+		ADVANCE_SENSOR_REQUEST_WRITE_INDEX(p_sensor_rb);
+		return true;
 	}
 
 	p_sensor_rb->p_request_buffer[p_sensor_rb->write_index].is_requested = true;

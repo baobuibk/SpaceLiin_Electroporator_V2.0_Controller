@@ -14,6 +14,7 @@ typedef struct _H3LIS331DL_data_typedef_
 	int32_t x;
 	int32_t y;
 	int32_t z;
+	uint8_t full_scale;
 } H3LIS331DL_data_typedef;
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Variables ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
@@ -27,6 +28,9 @@ extern H3LIS331DL_data_typedef H3LIS_Accel;
 uint8_t H3LIS331DL_init(i2c_stdio_typedef* p_i2c);
 
 uint8_t H3LIS331DL_read_value(i2c_stdio_typedef* p_i2c, Sensor_Read_typedef read_type);
+
+uint8_t H3LIS331DL_set_full_scale(i2c_stdio_typedef* p_i2c, uint32_t full_scale);
+uint8_t H3LIS331DL_get_full_scale(i2c_stdio_typedef* p_i2c);
 
 /* :::::::::: H3LIS331DL Flag Check Command :::::::: */
 bool Is_H3LIS331DL_Init_Complete(void);

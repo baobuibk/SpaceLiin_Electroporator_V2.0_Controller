@@ -12,6 +12,8 @@ typedef enum
 {
 	SENSOR_INIT_TYPE,
 	SENSOR_READ_TYPE,
+	SENSOR_SET_FS_TYPE,
+	SENSOR_GET_FS_TYPE,
 	SENSOR_RESET_I2C_BUS_TYPE,
 } sensor_request_type_t;
 
