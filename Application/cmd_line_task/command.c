@@ -1407,8 +1407,11 @@ int CMD_SET_THRESHOLD_ACCEL(int argc, char *argv[])
 	if (threshold < 1)
 		return CMDLINE_INVALID_ARG;
 	else if (threshold > (current_h3lis_fs * 1000))
+	{
+		UART_Send_String(CMD_line_handle, "THRESHOLD CANNOT LARGER THAN CURRENT H3LIS FULL SCALE SETTING\n> ");
 		return CMDLINE_INVALID_ARG;
-
+	}
+		
 	if (strlen(argv[1]) > 2)
 	{
 		return CMDLINE_INVALID_ARG;
