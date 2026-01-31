@@ -14,6 +14,8 @@ static uint8_t CMD_process_state = 0;
 uint8_t ChannelMapping[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 uint8_t User_Channel_Mapping[8] = {1, 2, 3, 4, 5, 6, 7, 8};
 
+static uint16_t current_h3lis_fs = 100;
+
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Private Prototype ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 static void fsp_print(uint8_t packet_length);
 static void double_to_string(double value, char *buffer, uint8_t precision);
@@ -1404,7 +1406,7 @@ int CMD_SET_THRESHOLD_ACCEL(int argc, char *argv[])
 	
 	if (threshold < 1)
 		return CMDLINE_INVALID_ARG;
-	else if (threshold > 400000) // 400.000g
+	else if (threshold > (current_h3lis_fs * 1000))
 		return CMDLINE_INVALID_ARG;
 
 	if (strlen(argv[1]) > 2)
@@ -2188,6 +2190,7 @@ int CMD_SET_SENSOR_H3LIS_FS(int argc, char *argv[])
 			break;
 		}
 
+		current_h3lis_fs = receive_argm;
 		CMD_process_state = 1;
 		return CMDLINE_IS_PROCESSING;
 	}
@@ -2266,6 +2269,7 @@ int CMD_GET_SENSOR_H3LIS_FS(int argc, char *argv[])
 		}
 
 		UART_Printf(CMD_line_handle, "> H3LIS331DL FULL SCALE: %dG\n", fs);
+		current_h3lis_fs = fs;
 		CMD_process_state = 0;
 		return CMDLINE_OK;
 	}
